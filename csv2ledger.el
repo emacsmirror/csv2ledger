@@ -128,14 +128,14 @@ grouped by <account>."
 
 (defun c2l-match-account (str)
   "Try to match STR to an account."
-  (unless jk--ledger-compiled-account-regexes
-    (setq jk--ledger-compiled-account-regexes
+  (unless c2l-compiled-account-regexes
+    (setq c2l-compiled-account-regexes
           (-> c2l-account-matchers-file
               (c2l-read-account-matchers)
               (c2l-compile-account-regexes))))
   (--some (if (string-match-p (cdr it) str)
               (car it))
-          jk--ledger-compiled-account-regexes))
+          c2l-compiled-account-regexes))
 
 (defun c2l-csv-line-to-ledger (row)
   "Convert ROW to a ledger entry.
