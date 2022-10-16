@@ -5,7 +5,7 @@
 
 ;; Author: Joost Kremers <joostkremers@fastmail.fm>
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
-;; Created: 2018
+;; Created: 2022
 ;; Version: 1.0
 
 ;; This file is NOT part of GNU Emacs.
