@@ -37,14 +37,79 @@
 
 (defvar ledger-post-amount-alignment-column)
 
-(defvar c2l-accounts-file nil)
-(defvar c2l-accounts nil)
-(defvar c2l-account-matchers-file nil)
-(defvar c2l-compiled-account-regexes nil)
-(defvar c2l-default-to-account nil)
-(defvar c2l-default-from-account nil)
-(defvar c2l-account-holder nil)
-(defvar c2l-csv-columns '(Date Valuation Type Description Sender Payee Amount Balance))
+(defgroup csv2ledger nil
+  "Csv2Ledger: Converting csv files to ledger entries."
+  :group 'ledger
+  :group 'CSV)
+
+(defcustom c2l-accounts-file nil
+  "File containing account declarations.
+This should point to a ledger file that defines the accounts.  It
+can be a separate file or a ledger file containing transactions."
+  :type 'file
+  :group 'csv2ledger)
+
+(defcustom c2l-account-matchers-file nil
+  "File containing matcher strings mapped to accounts.
+This should be a TSV (tab-separated values) file containing one
+matcher per line:
+
+aldi          Expenses:Groceries
+lidl          Expenses:Groceries
+restaurant    Expenses:Leisure:Restaurant
+
+where the two columns are separated by a TAB.
+
+The matcher is a string (not a regular expression).  If the
+matcher is found in the description, payee, type or sender of a
+transaction (in that order), the corresponding account is used to
+book the transaction."
+  :type 'file
+  :group 'csv2ledger)
+
+(defcustom c2l-base-account nil
+  "Base ledger account.
+A CSV file normally lists transactions for a single bank account.
+The base ledger account is the ledger account associated with
+this bank account.  As such, it is the account that will turn up
+in every transaction read from the CSV file.
+
+This is a buffer-local variable and can be set in the local
+variable block of a CSV file.  If its value is nil when invoking
+`csv2ledger', the user is asked for a value.  Setting a default
+value is useful if one only has one back account from which CSV
+files are processed."
+  :type 'file
+  :group 'csv2ledger
+  :local t)
+
+(defcustom c2l-fallback-account nil
+  "Fallback account for ledger transactions.
+When creating a ledger entry, csv2ledger tries to determine the
+opposite account for the transaction based on the matchers in
+`c2l-account-matchers-file'.  If no acccount is found, the value
+of this variable is used.  If the value is unset, the user is
+asked for an account."
+  :type 'string
+  :group 'csv2ledger)
+
+(defcustom c2l-account-holder nil
+  "Regular expression matching the account holder.
+If the payee matches this regular expression, the sender is used
+instead of the payee as the title of the entry."
+  :type 'string
+  :group 'csv2ledger)
+
+(defcustom c2l-csv-columns '(Date Valuation Type Description Sender Payee Amount _)
+  "List of columns in the CSV file.
+The data in the CSV file is extracted based on this list.  The
+order of elements in the list should therefore represent the
+order of columns in the CSV file."
+  :type '(repeat symbol)
+  :group 'csv2ledger)
+
+(defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
+(defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
 
 (defun c2l-parse-date (date)
   "Convert DATE from \"17.10.2022\" to \"2022-10-17\"."
@@ -66,12 +131,12 @@ is the account where the money comes from, TO the account to
 which it goes.  Note that if AMOUNT is negative, these roles are
 reversed."
   ;; TODO Fix doc string
-  (or to (setq to c2l-default-to-account))
+  (or to (setq to c2l-base-account))
   (setq amount (c2l-parse-amount amount))
   (let ((width ledger-post-amount-alignment-column))
     (concat (c2l-parse-date date) " * " title "\n"
             (if description (format "    ; Desc: %s\n" description) "")
-            (format "    %s\n" (or from c2l-default-from-account))
+            (format "    %s\n" (or from c2l-fallback-account))
             (format "    %s  " to)
             (make-string (- width 4 (length to) 2 (length amount)) ?\s)
             amount "\n")))
@@ -121,14 +186,14 @@ grouped by <account>."
 
 (defun c2l-match-account (str)
   "Try to match STR to an account."
-  (unless c2l-compiled-account-regexes
-    (setq c2l-compiled-account-regexes
+  (unless c2l--compiled-matcher-regexes
+    (setq c2l--compiled-matcher-regexes
           (-> c2l-account-matchers-file
               (c2l-read-account-matchers)
-              (c2l-compile-account-regexes))))
+              (c2l-compile-matcher-regexes))))
   (--some (if (string-match-p (cdr it) str)
               (car it))
-          c2l-compiled-account-regexes))
+          c2l--compiled-matcher-regexes))
 
 (defun c2l-csv-line-to-ledger (row)
   "Convert ROW to a ledger entry.
@@ -144,7 +209,7 @@ create the ledger entry."
                           sender
                         payee))
                (account (or (seq-some #'c2l-match-account (list description payee type sender))
-                            (completing-read (format "Account for transaction %s, %s «%.75s» " title amount description) c2l-accounts nil t)))
+                            (completing-read (format "Account for transaction %s, %s «%.75s» " title amount description) c2l--accounts nil t)))
                (entry (c2l-compose-entry date title amount description account)))
     entry))
 
@@ -158,8 +223,8 @@ Date Valuation Type Description Sender Payee Amount Balance
 Valuation and Balance are ignored, the other elements are used to
 create the ledger entry."
   (interactive)
-  (unless c2l-accounts
-    (setq c2l-accounts (c2l-read-accounts c2l-accounts-file)))
+  (unless c2l--accounts
+    (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
   (let* ((separator (car csv-separator-chars))
          (quote-char (string-to-char (or (car csv-field-quotes) "")))
          (line (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
