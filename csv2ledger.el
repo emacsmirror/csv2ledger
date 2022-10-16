@@ -155,13 +155,8 @@ reversed."
 
 (defun c2l-read-account-matchers (file)
   "Read account matchers from FILE.
-FILE should be a tsv file with one matcher per line, with the
-matcher in column 1 and the associated account in column 2.
-
-A matcher is a string (not a regular expression).  If the string
-is found in the description, payee, type of sender of a
-transaction (in that order), the account with the matcher is
-taken as the account to book the transaction to."
+See the documentation for the variable
+`c2l-account-matchers-file' for details on the matcher file."
   (with-temp-buffer
     (insert-file-contents file)
     (goto-char (point-min))
