@@ -173,12 +173,13 @@ taken as the account to book the transaction to."
         (forward-line 1))
       accounts)))
 
-(defun c2l-compile-account-regexes (accounts)
-  "Group elements in ACCOUNTS according to account.
+(defun c2l-compile-matcher-regexes (accounts)
+  "Create efficient regular expressions for the matchers in ACCOUNTS.
 ACCOUNTS is a list of (<matcher> . <account>) conses, where
 <matcher> should be unique but <account> may occur multiple
-times.  Return value is a list in which the items in ACCOUNTS are
-grouped by <account>."
+times.  Return value is an alist in which each account in
+ACCOUNTS is mapped to a regular expression matching all matchers
+for that account."
   (mapcar (lambda (e)
             (cons (car e)
                   (regexp-opt (mapcar #'car (cdr e)))))
