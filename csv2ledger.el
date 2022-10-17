@@ -139,9 +139,6 @@ returns a match wins."
   :type '(repeat symbol)
   :group 'csv2ledger)
 
-(defun c2l-parse-date (date)
-  "Convert DATE from \"17.10.2022\" to \"2022-10-17\"."
-  (string-join (nreverse (split-string date "\\.")) "-"))
 (defcustom c2l-auto-reconcile nil
   "If non-nil, mark every entry as reconciled."
   :type 'boolean
@@ -149,6 +146,18 @@ returns a match wins."
 
 
 (defun c2l-compose-entry (date title amount &optional description from to)
+(defun c2l-convert-little-endian-to-iso8601-date (date)
+  "Convert DATE from a little-endian format to an ISO 8601 format.
+DATE should be a string representing a date of the form
+DD.MM.YYYY.  Return value is a date string of the form YYYY-MM-DD.
+
+Note that the input date may have dots, dashes or forward slashes
+separating the date parts; also, additional whitespace is
+removed.  This function does not check if DATE has a valid date
+format, it just splits DATE on the separator, reverses the date
+parts and joins them again."
+  (string-join (nreverse (split-string date "[./-]" t "[[:space:]]")) "-"))
+
   "Create a ledger entry.
 DATE, TITLE, AMOUNT are used to create the entry.  DESCRIPTION,
 if non-nil, is added as a comment, preceded by \"Desc:\".  FROM
