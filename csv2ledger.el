@@ -100,7 +100,7 @@ instead of the payee as the title of the entry."
   :type 'string
   :group 'csv2ledger)
 
-(defcustom c2l-csv-columns '(date valuation type description sender payee amount _)
+(defcustom c2l-csv-columns '(date valuation description sender payee amount)
   "List of columns in the CSV file.
 The data in the CSV file is extracted based on this list.  The
 order of elements in the list should therefore represent the
