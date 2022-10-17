@@ -147,13 +147,6 @@ returns a match wins."
   :type 'boolean
   :group 'csv2ledger)
 
-(defun c2l-parse-amount (amount)
-  "Convert AMOUNT from \"-3.150,20 €\" to \"-€3150.20\"."
-  (string-match "\\(-\\)?\\([[:digit:].]+\\),\\([[:digit:]]\\{2\\}\\)" amount)
-  (let ((sign (or (match-string 1 amount) ""))
-        (euros (string-replace "." "" (match-string 2 amount)))
-        (cents (match-string 3 amount)))
-    (concat sign "€" euros "." cents)))
 
 (defun c2l-compose-entry (date title amount &optional description from to)
   "Create a ledger entry.
