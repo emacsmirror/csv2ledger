@@ -267,7 +267,7 @@ strings are interpreted according to the template in
                                                (funcall c2l-title-function fields)
                                                (alist-get 'amount fields)
                                                (alist-get 'description fields))
-                                       c2l--accounts nil t))))
+                                       c2l--accounts))))
     (c2l-compose-entry fields account)))
 
 ;;;###autoload
@@ -275,7 +275,7 @@ strings are interpreted according to the template in
   "Set `c2l-base-account'."
   (unless c2l--accounts
     (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
-  (setq c2l-base-account (completing-read "Base account for current buffer: " c2l--accounts nil t)))
+  (setq c2l-base-account (completing-read "Base account for current buffer: " c2l--accounts)))
 
 ;;;###autoload
 (defun c2l-csv-entry-as-kill ()
