@@ -104,7 +104,8 @@ instead of the payee as the title of the entry."
   "List of columns in the CSV file.
 The data in the CSV file is extracted based on this list.  The
 order of elements in the list should therefore represent the
-order of columns in the CSV file."
+order of columns in the CSV file.  A column that is not relevant
+can be labeled with an underscore."
   :type '(repeat symbol)
   :group 'csv2ledger)
 
