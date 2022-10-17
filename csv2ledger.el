@@ -158,6 +158,20 @@ format, it just splits DATE on the separator, reverses the date
 parts and joins them again."
   (string-join (nreverse (split-string date "[./-]" t "[[:space:]]")) "-"))
 
+(defun c2l-payee-or-sender (entry)
+  "Return payee or sender based on `c2l-account-holder'.
+This function is for use as the value of `c2l-title-function'.
+ENTRY should be an alist containing field-value pairs for an
+entry and should contain values for `payee' and `sender'.  If the
+value of `c2l-account-holder' matches the payee, the sender is
+returned, otherwise the payee is returned."
+  (let ((payee (alist-get 'payee entry))
+        (sender (alist-get 'sender entry)))
+    (if (and (stringp c2l-account-holder)
+             (string-match-p c2l-account-holder payee))
+        sender
+      payee)))
+
   "Create a ledger entry.
 DATE, TITLE, AMOUNT are used to create the entry.  DESCRIPTION,
 if non-nil, is added as a comment, preceded by \"Desc:\".  FROM
