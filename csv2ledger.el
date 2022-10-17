@@ -130,6 +130,14 @@ the corresponding account is used to book the transaction."
   :type 'file
   :group 'csv2ledger)
 
+(defcustom c2l-title-match-fields '(payee description)
+  "List of fields used for matching the target account.
+Fields in this list are matched against the matchers in
+`c2l-account-matchers-file'.  Note that the order of the fields
+in this list can be relevant, because the first field that
+returns a match wins."
+  :type '(repeat symbol)
+  :group 'csv2ledger)
 
 (defun c2l-parse-date (date)
   "Convert DATE from \"17.10.2022\" to \"2022-10-17\"."
