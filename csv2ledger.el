@@ -57,9 +57,8 @@ this bank account.  As such, it is the account that will turn up
 in every transaction read from the CSV file.
 
 This is a buffer-local variable and can be set in the local
-variable block of a CSV file.  If its value is nil when invoking
-`csv2ledger', the user is asked for a value.  Setting a default
-value is useful if one only has one back account from which CSV
+variable block of a CSV file.  Alternatively, one can set a
+default value if one only has one back account from which CSV
 files are processed."
   :type 'file
   :group 'csv2ledger
