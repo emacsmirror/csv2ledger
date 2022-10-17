@@ -123,6 +123,14 @@ return a string."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
+(defcustom c2l-title-function #'c2l-payee-or-sender
+  "Function to create a title.
+The function should take as argument an entry alist of
+field-value pairs and should return a string.  The string
+returned is used as the title of the ledger entry,"
+  :type 'function
+  :group 'csv2ledger)
+
 
 (defun c2l-parse-date (date)
   "Convert DATE from \"17.10.2022\" to \"2022-10-17\"."
