@@ -271,6 +271,13 @@ strings are interpreted according to the template in
     (c2l-compose-entry fields account)))
 
 ;;;###autoload
+(defun c2l-set-base-account ()
+  "Set `c2l-base-account'."
+  (unless c2l--accounts
+    (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
+  (setq c2l-base-account (completing-read "Base account for current buffer: " c2l--accounts nil t)))
+
+;;;###autoload
 (defun c2l-csv-entry-as-kill ()
   "Convert the current CSV row to a Ledger entry and place it in the kill ring.
 The fields in the row are interpreted according to the template
