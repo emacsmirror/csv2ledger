@@ -267,13 +267,9 @@ strings are interpreted according to the template in
 
 ;;;###autoload
 (defun c2l-csv-entry-as-kill ()
-  "Convert the current csv row to a Ledger entry and place it in the kill ring.
-The line should have the following format:
-
-Date Valuation Type Description Sender Payee Amount Balance
-
-Valuation and Balance are ignored, the other elements are used to
-create the ledger entry."
+  "Convert the current CSV row to a Ledger entry and place it in the kill ring.
+The fields in the row are interpreted according to the template
+in `c2l-csv-columns'."
   (interactive)
   (unless c2l--accounts
     (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
