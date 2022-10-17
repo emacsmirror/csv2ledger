@@ -142,6 +142,10 @@ returns a match wins."
 (defun c2l-parse-date (date)
   "Convert DATE from \"17.10.2022\" to \"2022-10-17\"."
   (string-join (nreverse (split-string date "\\.")) "-"))
+(defcustom c2l-auto-reconcile nil
+  "If non-nil, mark every entry as reconciled."
+  :type 'boolean
+  :group 'csv2ledger)
 
 (defun c2l-parse-amount (amount)
   "Convert AMOUNT from \"-3.150,20 €\" to \"-€3150.20\"."
