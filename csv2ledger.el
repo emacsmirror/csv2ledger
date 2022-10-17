@@ -202,7 +202,8 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
 
 (defun c2l-read-accounts (file)
   "Read list of accounts from FILE."
-  (when (file-readable-p file)
+  (when (and (stringp file)
+             (file-readable-p file))
     (with-temp-buffer
       (insert-file-contents file)
       (goto-char (point-min))
@@ -217,7 +218,8 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
   "Read account matchers from FILE.
 See the documentation for the variable
 `c2l-account-matchers-file' for details on the matcher file."
-  (when (file-readable-p file)
+  (when (and (stringp file)
+             (file-readable-p file))
     (with-temp-buffer
       (insert-file-contents file)
       (goto-char (point-min))
