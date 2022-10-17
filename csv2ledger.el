@@ -202,34 +202,36 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
 
 (defun c2l-read-accounts (file)
   "Read list of accounts from FILE."
-  (when (and (stringp file)
-             (file-readable-p file))
-    (with-temp-buffer
-      (insert-file-contents file)
-      (goto-char (point-min))
-      (let (accounts)
-        (while (not (eobp))
-          (if (looking-at "^account \\([[:print:]]+\\)$")
-              (push (match-string 1) accounts))
-          (forward-line 1))
-        accounts))))
+  (when (stringp file)
+    (if (file-readable-p file)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (let (accounts)
+            (while (not (eobp))
+              (if (looking-at "^account \\([[:print:]]+\\)$")
+                  (push (match-string 1) accounts))
+              (forward-line 1))
+            accounts))
+      (user-error "Accounts file `%s' not found" file))))
 
 (defun c2l-read-account-matchers (file)
   "Read account matchers from FILE.
 See the documentation for the variable
 `c2l-account-matchers-file' for details on the matcher file."
-  (when (and (stringp file)
-             (file-readable-p file))
-    (with-temp-buffer
-      (insert-file-contents file)
-      (goto-char (point-min))
-      (let (accounts)
-        (while (looking-at "\\([[:print:]]+\\)\t\\([[:print:]]+\\)")
-          (let ((matcher (match-string 1))
-                (account (match-string 2)))
-            (push (cons matcher account) accounts))
-          (forward-line 1))
-        accounts))))
+  (when (stringp file)
+    (if (file-readable-p file)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (let (accounts)
+            (while (looking-at "\\([[:print:]]+\\)\t\\([[:print:]]+\\)")
+              (let ((matcher (match-string 1))
+                    (account (match-string 2)))
+                (push (cons matcher account) accounts))
+              (forward-line 1))
+            accounts))
+      (user-error "Account matcher file `%s' not found" file))))
 
 (defun c2l-compile-matcher-regexes (accounts)
   "Create efficient regular expressions for the matchers in ACCOUNTS.
