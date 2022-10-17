@@ -91,8 +91,6 @@ can be labeled with an underscore."
   :type '(repeat symbol)
   :group 'csv2ledger)
 
-(defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
-(defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
 (defcustom c2l-field-parse-functions '((date        . identity)
                                        (valuation   . identity)
                                        (description . identity)
@@ -144,6 +142,8 @@ returns a match wins."
   :type 'boolean
   :group 'csv2ledger)
 
+(defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
+(defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
 
 (defun c2l-compose-entry (date title amount &optional description from to)
 (defun c2l-convert-little-endian-to-iso8601-date (date)
