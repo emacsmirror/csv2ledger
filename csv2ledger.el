@@ -145,7 +145,6 @@ returns a match wins."
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
 
-(defun c2l-compose-entry (date title amount &optional description from to)
 (defun c2l-convert-little-endian-to-iso8601-date (date)
   "Convert DATE from a little-endian format to an ISO 8601 format.
 DATE should be a string representing a date of the form
@@ -172,22 +171,35 @@ returned, otherwise the payee is returned."
         sender
       payee)))
 
+(defun c2l-compose-entry (items &optional from to)
   "Create a ledger entry.
-DATE, TITLE, AMOUNT are used to create the entry.  DESCRIPTION,
-if non-nil, is added as a comment, preceded by \"Desc:\".  FROM
-is the account where the money comes from, TO the account to
+ITEMS is an alist containing (key . value) pairs that should be
+included in the entry.  It should contain values for the keys
+`date', `payee', `sender' and `amount'.  ITEMS may also contain a
+value for `description'.  If it is present, it is added as a
+comment, preceded by \"Desc:\".
+
+FROM is the account where the money comes from, TO the account to
 which it goes.  Note that if AMOUNT is negative, these roles are
-reversed."
-  ;; TODO Fix doc string
+reversed.  FROM and TO default to `c2l-fallback-account' and
+`c2l-base-account', respectively."
+  (or from (setq from c2l-fallback-account))
   (or to (setq to c2l-base-account))
-  (setq amount (c2l-parse-amount amount))
-  (let ((width ledger-post-amount-alignment-column))
-    (concat (c2l-parse-date date) " * " title "\n"
-            (if description (format "    ; Desc: %s\n" description) "")
-            (format "    %s\n" (or from c2l-fallback-account))
-            (format "    %s  " to)
-            (make-string (- width 4 (length to) 2 (length amount)) ?\s)
-            amount "\n")))
+  (let* ((width ledger-post-amount-alignment-column)
+         (parsed-items (mapcar (lambda (item)
+                                 (let ((field (car item))
+                                       (value (cdr item)))
+                                   (cons field
+                                         (funcall (alist-get field c2l-field-parse-functions #'identity) value))))
+                               items))
+         (title (funcall c2l-title-function parsed-items)))
+    (let-alist parsed-items
+      (concat .date (if .valuation (format "=%s " .valuation) "") (if c2l-auto-reconcile " *" "") " " title "\n"
+              (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
+              (format "    %s\n" from)
+              (format "    %s  " to)
+              (make-string (- width 4 (length to) 2 (length .amount)) ?\s)
+              .amount "\n"))))
 
 (defun c2l-read-accounts (file)
   "Read list of accounts from FILE."
@@ -241,21 +253,17 @@ for that account."
 
 (defun c2l-csv-line-to-ledger (row)
   "Convert ROW to a ledger entry.
-ROW is a list of strings and should have the following elements:
-
-Date Valuation Type Description Sender Payee Amount Balance
-
-Valuation and Balance are ignored, the other elements are used to
-create the ledger entry."
-  (pcase-let* ((`(,date ,_ ,type ,description ,sender ,payee ,amount ,_) row)
-               (title (if (and (stringp c2l-account-holder)
-                               (string-match-p c2l-account-holder payee))
-                          sender
-                        payee))
-               (account (or (seq-some #'c2l-match-account (list description payee type sender))
-                            (completing-read (format "Account for transaction %s, %s «%.75s» " title amount description) c2l--accounts nil t)))
-               (entry (c2l-compose-entry date title amount description account)))
-    entry))
+ROW contains the data of the entry as a list of strings.  The
+strings are interpreted according to the template in
+`c2l-csv-columns'."
+  (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
+         (account (or (-some #'c2l-match-account (mapcar #'cdr (--filter (memq (car it) c2l-title-match-fields) fields)))
+                      (completing-read (format "Account for transaction %s, %s «%.75s» "
+                                               (funcall c2l-title-function fields)
+                                               (alist-get 'amount fields)
+                                               (alist-get 'description fields))
+                                       c2l--accounts nil t))))
+    (c2l-compose-entry fields account)))
 
 ;;;###autoload
 (defun c2l-csv-entry-as-kill ()
