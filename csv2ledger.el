@@ -49,24 +49,6 @@ can be a separate file or a ledger file containing transactions."
   :type 'file
   :group 'csv2ledger)
 
-(defcustom c2l-account-matchers-file nil
-  "File containing matcher strings mapped to accounts.
-This should be a TSV (tab-separated values) file containing one
-matcher per line:
-
-aldi          Expenses:Groceries
-lidl          Expenses:Groceries
-restaurant    Expenses:Leisure:Restaurant
-
-where the two columns are separated by a TAB.
-
-The matcher is a string (not a regular expression).  If the
-matcher is found in the description, payee, type or sender of a
-transaction (in that order), the corresponding account is used to
-book the transaction."
-  :type 'file
-  :group 'csv2ledger)
-
 (defcustom c2l-base-account nil
   "Base ledger account.
 A CSV file normally lists transactions for a single bank account.
@@ -129,6 +111,23 @@ The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
 returned is used as the title of the ledger entry,"
   :type 'function
+  :group 'csv2ledger)
+
+(defcustom c2l-account-matchers-file nil
+  "File containing matcher strings mapped to accounts.
+This should be a TSV (tab-separated values) file containing one
+matcher per line:
+
+aldi          Expenses:Groceries
+lidl          Expenses:Groceries
+restaurant    Expenses:Leisure:Restaurant
+
+where the two columns are separated by a TAB.
+
+The matcher is a string (not a regular expression).  If a matcher
+is found in any of the fields listed in `c2l-title-match-fields',
+the corresponding account is used to book the transaction."
+  :type 'file
   :group 'csv2ledger)
 
 
