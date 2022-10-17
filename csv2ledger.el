@@ -163,12 +163,12 @@ ENTRY should be an alist containing field-value pairs for an
 entry and should contain values for `payee' and `sender'.  If the
 value of `c2l-account-holder' matches the payee, the sender is
 returned, otherwise the payee is returned."
-  (let ((payee (alist-get 'payee entry))
-        (sender (alist-get 'sender entry)))
-    (if (and (stringp c2l-account-holder)
-             (string-match-p c2l-account-holder payee))
-        sender
-      payee)))
+  (when (stringp c2l-account-holder)
+    (let ((payee (alist-get 'payee entry))
+         (sender (alist-get 'sender entry)))
+     (if (string-match-p c2l-account-holder payee)
+         sender
+       payee))))
 
 (defun c2l-compose-entry (items &optional from to)
   "Create a ledger entry.
