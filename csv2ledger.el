@@ -202,30 +202,32 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
 
 (defun c2l-read-accounts (file)
   "Read list of accounts from FILE."
-  (with-temp-buffer
-    (insert-file-contents file)
-    (goto-char (point-min))
-    (let (accounts)
-      (while (not (eobp))
-        (if (looking-at "^account \\([[:print:]]+\\)$")
-            (push (match-string 1) accounts))
-        (forward-line 1))
-      accounts)))
+  (when (file-readable-p file)
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (let (accounts)
+        (while (not (eobp))
+          (if (looking-at "^account \\([[:print:]]+\\)$")
+              (push (match-string 1) accounts))
+          (forward-line 1))
+        accounts))))
 
 (defun c2l-read-account-matchers (file)
   "Read account matchers from FILE.
 See the documentation for the variable
 `c2l-account-matchers-file' for details on the matcher file."
-  (with-temp-buffer
-    (insert-file-contents file)
-    (goto-char (point-min))
-    (let (accounts)
-      (while (looking-at "\\([[:print:]]+\\)\t\\([[:print:]]+\\)")
-        (let ((matcher (match-string 1))
-              (account (match-string 2)))
-          (push (cons matcher account) accounts))
-        (forward-line 1))
-      accounts)))
+  (when (file-readable-p file)
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (let (accounts)
+        (while (looking-at "\\([[:print:]]+\\)\t\\([[:print:]]+\\)")
+          (let ((matcher (match-string 1))
+                (account (match-string 2)))
+            (push (cons matcher account) accounts))
+          (forward-line 1))
+        accounts))))
 
 (defun c2l-compile-matcher-regexes (accounts)
   "Create efficient regular expressions for the matchers in ACCOUNTS.
