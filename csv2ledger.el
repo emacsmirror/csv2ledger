@@ -111,6 +111,18 @@ can be labeled with an underscore."
 
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
+(defcustom c2l-field-parse-functions '((date        . identity)
+                                       (valuation   . identity)
+                                       (description . identity)
+                                       (sender      . identity)
+                                       (payee       . identity)
+                                       (amount      . identity))
+  "List of functions to modify fields in an entry.
+These functions should take a single string argument and should
+return a string."
+  :type '(repeat (cons (symbol :tag "Field") function))
+  :group 'csv2ledger)
+
 
 (defun c2l-parse-date (date)
   "Convert DATE from \"17.10.2022\" to \"2022-10-17\"."
