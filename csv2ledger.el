@@ -304,8 +304,7 @@ in `c2l-csv-columns'."
   (interactive)
   (unless c2l--accounts
     (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
-  (let* ((row (c2l-get-current-row))
-         (entry (c2l-csv-line-to-ledger row)))
+  (let ((entry (c2l-csv-line-to-ledger (c2l-get-current-row))))
     (kill-new entry)
     (message entry)))
 
