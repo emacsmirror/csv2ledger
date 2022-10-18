@@ -143,6 +143,7 @@ returns a match wins."
 
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
+(defvar c2l--results-buffer nil "Buffer for conversion results.")
 
 (defun c2l-convert-little-endian-to-iso8601-date (date)
   "Convert DATE from a little-endian format to an ISO 8601 format.
@@ -289,6 +290,20 @@ like a number."
            (fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
       (not (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}"  (alist-get 'amount fields))))))
 
+(defun c2l-get-results-buffer ()
+  "Create a results buffer for conversion.
+The buffer is called \"*Csv2Ledger Results*\".  If a buffer with
+this name already exists, it is erased and returned.  Otherwise a
+new buffer is created."
+  (if (and c2l--results-buffer
+           (buffer-live-p c2l--results-buffer))
+      (with-current-buffer c2l--results-buffer
+        (erase-buffer))
+    (setq c2l--results-buffer (get-buffer-create "*Csv2Ledger Results*"))
+    (with-current-buffer c2l--results-buffer
+      (ledger-mode)))
+  c2l--results-buffer)
+
 ;;;###autoload
 (defun c2l-set-base-account ()
   "Set `c2l-base-account'."
@@ -320,9 +335,7 @@ This function always returns nil.  The converted entries are
 placed in the buffer \"*Csv2Ledger Results*\", which is erased
 beforehand if it already exists."
   (interactive "r")
-  (let ((buffer (get-buffer-create "*Csv2Ledger Results*")))
-    (with-current-buffer buffer
-      (erase-buffer))
+  (let ((buffer (c2l-get-results-buffer))
     (save-mark-and-excursion
       (goto-char start)
       (beginning-of-line)
