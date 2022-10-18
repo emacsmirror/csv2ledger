@@ -270,6 +270,14 @@ strings are interpreted according to the template in
                                        c2l--accounts))))
     (c2l-compose-entry fields account)))
 
+(defun c2l-get-current-row ()
+  "Read the current line as a CSV row.
+Return value is a list of values as strings."
+  (let ((separator (car csv-separator-chars))
+        (quote-char (string-to-char (or (car csv-field-quotes) "")))
+        (line (buffer-substring-no-properties (point-at-bol) (point-at-eol))))
+    (parse-csv-string line separator quote-char)))
+
 ;;;###autoload
 (defun c2l-set-base-account ()
   "Set `c2l-base-account'."
@@ -285,10 +293,7 @@ in `c2l-csv-columns'."
   (interactive)
   (unless c2l--accounts
     (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
-  (let* ((separator (car csv-separator-chars))
-         (quote-char (string-to-char (or (car csv-field-quotes) "")))
-         (line (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
-         (row (parse-csv-string line separator quote-char))
+  (let* ((row (c2l-get-current-row))
          (entry (c2l-csv-line-to-ledger row)))
     (kill-new entry)
     (message entry)))
