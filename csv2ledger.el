@@ -336,14 +336,17 @@ placed in the buffer \"*Csv2Ledger Results*\", which is erased
 beforehand if it already exists."
   (interactive "r")
   (let ((buffer (c2l-get-results-buffer))
+        (n 0))
     (save-mark-and-excursion
       (goto-char start)
       (beginning-of-line)
       (while (< (point) end)
         (let ((entry (c2l-csv-line-to-ledger (c2l-get-current-row))))
+          (setq n (1+ n))
           (with-current-buffer buffer
             (insert entry "\n")))
-        (forward-line 1)))))
+        (forward-line 1)))
+    (message "[Csv2Ledger] Converted %d entries." n)))
 
 (provide 'csv2ledger)
 
