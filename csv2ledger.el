@@ -309,6 +309,30 @@ in `c2l-csv-columns'."
     (kill-new entry)
     (message entry)))
 
+(defun c2l-convert-region (start end)
+  "Convert the CSV entries in the region to ledger entries.
+START and END describe the region.  Note that it is assumed that
+START does indeed refer to the start of the region and END to its
+end.  In other words, START must be smaller than END.  START and
+END do not have to point to the start of end of a line, but the
+conversion always takes the whole line into account.
+
+This function always returns nil.  The converted entries are
+placed in the buffer \"*Csv2Ledger Results*\", which is erased
+beforehand if it already exists."
+  (interactive "r")
+  (let ((buffer (get-buffer-create "*Csv2Ledger Results*")))
+    (with-current-buffer buffer
+      (erase-buffer))
+    (save-mark-and-excursion
+      (goto-char start)
+      (beginning-of-line)
+      (while (< (point) end)
+        (let ((entry (c2l-csv-line-to-ledger (c2l-get-current-row))))
+          (with-current-buffer buffer
+            (insert entry "\n")))
+        (forward-line 1)))))
+
 (provide 'csv2ledger)
 
 ;;; csv2ledger.el ends here
