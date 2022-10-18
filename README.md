@@ -32,7 +32,7 @@ The second option you should set is `c2l-csv-columns`. This defines the columns 
 (date valuation description sender payee amount)
 ```
 
-This means that the first column contains the date, the second the valuation, etc. You should change this list to whatever is correct for the CSV files you want to read. In order to create a proper ledger entry, your file should at least contain `date`, `sender`, `payee` and `amount`. The `valuation` and `description` fields can be added to the entry if they exist, but if not, they are left out.
+This means that the first column contains the date, the second the valuation, etc. You should change this list to whatever is correct for the CSV files you want to read. In order to create a proper ledger entry, your file should at least contain `date`, `sender`, `payee` and `amount`. The `valuation` and `description` fields are added to the entry if they exist, but if not, they are left out.
 
 If there are columns in your CSV files that you do not need for the ledger entry, you can write and underscore for them. For example, this is the setting that I use for my CSV files:
 
@@ -76,7 +76,39 @@ By default, `csv2ledger` only checks the `payee` and `description` fields in the
 (setq c2l-title-match-fields '(description payee sender type))
 ```
 
-This means that the `description` field is checked first, then the `payee`, then the `sender` and lastly the `type` field. The `type` field is not part of the default setup, but it is listed in the CSV files I get from my bank and it indicates whether the transaction was a bank transfer, a recurrent order, an ATM withdrawal, a card payment at a store, etc. I have a matcher that captures ATM withdrawals that sets the target account to `Assets:Cash`. 
+This means that the `description` field is checked first, then the `payee`, then the `sender` and lastly the `type` field. The `type` field is not part of the default setup, but it is listed in the CSV files I get from my bank and it indicates whether the transaction was a bank transfer, an ATM withdrawal, a card payment at a store, etc. I have a matcher that captures ATM withdrawals that sets the target account to `Assets:Cash`. 
 
-Note that this is the *only* reason for including the `type` field in `c2l-csv-columns` above: I use its value to help determine the target account.
+Note that this is the *only* reason for including the `type` field in `c2l-csv-columns` above: I use its value to help determine the target account. As mentioned, the `type` field is not included in the ledger entry.
 
+## Modifying field values ##
+
+Depending on the format of your CSV file, it may also be necessary to set the variable `c2l-field-parse-functions`. This is a list mapping fields to functions that take the field's value and convert it to something else. For example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. `csv2ledger` comes with a function that performs this conversion, `c2l-convert-little-endian-to-iso8601-date`. I therefore set `c2l-field-parse-functions` like this:
+
+```
+(setq c2l-field-parse-functions
+      '((date . c2l-convert-little-endian-to-iso8601-date)))
+```
+
+I have a similar problem with the amount. In the CSV file, amounts are given as follows: `3.150,20 €` or `-240,71 €`. I need to remove the dots and replace the decimal comma with a decimal dot. Furthermore, in my ledger file, the commodity € comes before the amount, but after the minus sign.
+
+Since this is a very particular conversion, there is no function for it included in `csv2ledger`, but if you face the same problem, you can use the following (or adapt it, if your problem is similar):
+
+```
+(defun c2l-convert-postbank-to-ledger-amount (amount)
+  "Convert AMOUNT from the format found in Postbank CSV files to ledger format.
+Specifically, this converts an amount of the form \"-3.150,20 €\"
+to \"-€3150.20\"."
+  (string-match "\\(-\\)?\\([[:digit:].]+\\),\\([[:digit:]]\\{2\\}\\)" amount)
+  (let ((sign (or (match-string 1 amount) ""))
+        (euros (string-replace "." "" (match-string 2 amount)))
+        (cents (match-string 3 amount)))
+    (concat sign "€" euros "." cents)))
+```
+
+You can then add this to `c2l-field-parse-functions`:
+
+```
+(setq c2l-field-parse-functions
+      '((date . c2l-convert-little-endian-to-iso8601-date)
+        (amount . c2l-convert-postbank-to-ledger-amount)))
+```
