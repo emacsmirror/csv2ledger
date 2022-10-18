@@ -214,7 +214,7 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
                   (push (match-string 1) accounts))
               (forward-line 1))
             accounts))
-      (user-error "Accounts file `%s' not found" file))))
+      (user-error "[Csv2Ledger] Accounts file `%s' not found" file))))
 
 (defun c2l-read-account-matchers (file)
   "Read account matchers from FILE.
@@ -232,7 +232,7 @@ See the documentation for the variable
                 (push (cons matcher account) accounts))
               (forward-line 1))
             accounts))
-      (user-error "Account matcher file `%s' not found" file))))
+      (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
 
 (defun c2l-compile-matcher-regexes (accounts)
   "Create efficient regular expressions for the matchers in ACCOUNTS.
