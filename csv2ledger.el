@@ -348,6 +348,22 @@ beforehand if it already exists."
         (forward-line 1)))
     (message "[Csv2Ledger] Converted %d entries." n)))
 
+;;;###autoload
+(defun c2l-convert-buffer ()
+  "Convert the CSV entries in the current buffer to ledger entries.
+The converted entries are placed in the buffer \"*Csv2Ledger
+Results*\", which is erased beforehand if it already exists.  If
+the first line of the buffer is a header line, it is
+skipped.  (The first line is considered to be a header if no
+amount can be found in the amount column.)"
+  (interactive)
+  (let ((beg (save-mark-and-excursion
+               (goto-char (point-min))
+               (if (c2l-has-header)
+                   (forward-line 1))
+               (point))))
+    (c2l-convert-region beg (point-max))))
+
 (provide 'csv2ledger)
 
 ;;; csv2ledger.el ends here
