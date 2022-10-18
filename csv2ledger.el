@@ -287,7 +287,7 @@ like a number."
     (goto-char (point-min))
     (let* ((row (c2l-get-current-row))
            (fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
-      (not (string-match-p "[0-9,.-]+" (alist-get 'amount fields))))))
+      (not (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}"  (alist-get 'amount fields))))))
 
 ;;;###autoload
 (defun c2l-set-base-account ()
