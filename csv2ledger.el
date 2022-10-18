@@ -278,6 +278,17 @@ Return value is a list of values as strings."
         (line (buffer-substring-no-properties (point-at-bol) (point-at-eol))))
     (parse-csv-string line separator quote-char)))
 
+(defun c2l-has-header ()
+  "Return non-nil if the current CSV buffer appears to have a header.
+Essentially, this function just takes the field that should
+contain the amount and checks if it contains something that looks
+like a number."
+  (save-mark-and-excursion
+    (goto-char (point-min))
+    (let* ((row (c2l-get-current-row))
+           (fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
+      (not (string-match-p "[0-9,.-]+" (alist-get 'amount fields))))))
+
 ;;;###autoload
 (defun c2l-set-base-account ()
   "Set `c2l-base-account'."
