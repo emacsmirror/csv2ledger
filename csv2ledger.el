@@ -35,8 +35,6 @@
 (require 'csv-mode)
 (require 'dash)
 
-(defvar ledger-post-amount-alignment-column)
-
 (defgroup csv2ledger nil
   "Csv2Ledger: Converting csv files to ledger entries."
   :group 'ledger
