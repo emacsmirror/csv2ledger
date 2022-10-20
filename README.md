@@ -81,6 +81,7 @@ This means that the `description` field is checked first, then the `payee`, then
 
 Note that this is the *only* reason for including the `type` field in `c2l-csv-columns` above: I use its value to help determine the target account. As mentioned, the `type` field is not included in the ledger entry.
 
+
 ## Modifying field values ##
 
 Depending on the format of your CSV file, it may also be necessary to set the variable `c2l-field-parse-functions`. This is a list mapping fields to functions that take the field's value and convert it to something else. For example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. `csv2ledger` comes with a function that performs this conversion, `c2l-convert-little-endian-to-iso8601-date`. I therefore set `c2l-field-parse-functions` like this:
@@ -113,6 +114,8 @@ You can then add this to `c2l-field-parse-functions`:
       '((date . c2l-convert-little-endian-to-iso8601-date)
         (amount . c2l-convert-postbank-to-ledger-amount)))
 ```
+
+By default, ledger entries are created uncleared. If you want to mark all transactions as cleared, set the variable `c2l-auto-cleared`.
 
 A final variable you may want to set is `c2l-alignment-column`. This should most likely have the same value as `ledger-post-amount-alignment-column`, although `csv2ledger` currently assumes that `ledger-post-amount-alignment-at` is set to `:end` and that the commodity precedes the amount. If either is not true, alignment is probably not optimal.
 
