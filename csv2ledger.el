@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'ledger-mode)
+(require 'subr-x)
 (require 'parse-csv)
 (require 'csv-mode)
 (require 'dash)
