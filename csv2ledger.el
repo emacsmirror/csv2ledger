@@ -139,6 +139,13 @@ returns a match wins."
   :type 'boolean
   :group 'csv2ledger)
 
+(defcustom c2l-alignment-column 52
+  "The column to which amounts are aligned.
+This should most likely be set to the same value as
+`ledger-post-amount-alignment-column'."
+  :type 'integer
+  :group 'csv2ledger)
+
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
 (defvar c2l--results-buffer nil "Buffer for conversion results.")
@@ -183,8 +190,7 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
 `c2l-base-account', respectively."
   (or from (setq from c2l-fallback-account))
   (or to (setq to c2l-base-account))
-  (let* ((width ledger-post-amount-alignment-column)
-         (parsed-items (mapcar (lambda (item)
+  (let* ((parsed-items (mapcar (lambda (item)
                                  (let ((field (car item))
                                        (value (cdr item)))
                                    (cons field
@@ -196,7 +202,7 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
               (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
               (format "    %s\n" from)
               (format "    %s  " to)
-              (make-string (- width 4 (length to) 2 (length .amount)) ?\s)
+              (make-string (- c2l-alignment-column 4 (length to) 2 (length .amount)) ?\s)
               .amount "\n"))))
 
 (defun c2l--read-accounts (file)
