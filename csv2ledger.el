@@ -169,7 +169,7 @@ returned, otherwise the payee is returned."
          sender
        payee))))
 
-(defun c2l-compose-entry (items &optional from to)
+(defun c2l--compose-entry (items &optional from to)
   "Create a ledger entry.
 ITEMS is an alist containing (key . value) pairs that should be
 included in the entry.  It should contain values for the keys
@@ -199,7 +199,7 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
               (make-string (- width 4 (length to) 2 (length .amount)) ?\s)
               .amount "\n"))))
 
-(defun c2l-read-accounts (file)
+(defun c2l--read-accounts (file)
   "Read list of accounts from FILE."
   (when (stringp file)
     (if (file-readable-p file)
@@ -214,7 +214,7 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
             accounts))
       (user-error "[Csv2Ledger] Accounts file `%s' not found" file))))
 
-(defun c2l-read-account-matchers (file)
+(defun c2l--read-account-matchers (file)
   "Read account matchers from FILE.
 See the documentation for the variable
 `c2l-account-matchers-file' for details on the matcher file."
@@ -232,7 +232,7 @@ See the documentation for the variable
             accounts))
       (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
 
-(defun c2l-compile-matcher-regexes (accounts)
+(defun c2l--compile-matcher-regexes (accounts)
   "Create efficient regular expressions for the matchers in ACCOUNTS.
 ACCOUNTS is a list of (<matcher> . <account>) conses, where
 <matcher> should be unique but <account> may occur multiple
@@ -244,18 +244,18 @@ for that account."
                   (regexp-opt (mapcar #'car (cdr e)))))
           (seq-group-by #'cdr accounts)))
 
-(defun c2l-match-account (str)
+(defun c2l--match-account (str)
   "Try to match STR to an account."
   (unless c2l--compiled-matcher-regexes
     (setq c2l--compiled-matcher-regexes
           (-> c2l-account-matchers-file
-              (c2l-read-account-matchers)
-              (c2l-compile-matcher-regexes))))
+              (c2l--read-account-matchers)
+              (c2l--compile-matcher-regexes))))
   (--some (if (string-match-p (cdr it) str)
               (car it))
           c2l--compiled-matcher-regexes))
 
-(defun c2l-csv-line-to-ledger (row)
+(defun c2l--csv-line-to-ledger (row)
   "Convert ROW to a ledger entry.
 ROW contains the data of the entry as a list of strings.  The
 strings are interpreted according to the template in
@@ -265,16 +265,16 @@ basis of the matchers in `c2l-account-matchers-file'.  If none is
 found, the value of `c2l-fallback-account' is used.  If that
 option is unset, the user is asked for an account."
   (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
-         (account (or (-some #'c2l-match-account (mapcar #'cdr (--filter (memq (car it) c2l-title-match-fields) fields)))
+         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-title-match-fields) fields)))
                       c2l-fallback-account
                       (completing-read (format "Account for transaction %s, %s «%.75s» "
                                                (funcall c2l-title-function fields)
                                                (alist-get 'amount fields)
                                                (alist-get 'description fields))
                                        c2l--accounts))))
-    (c2l-compose-entry fields account)))
+    (c2l--compose-entry fields account)))
 
-(defun c2l-get-current-row ()
+(defun c2l--get-current-row ()
   "Read the current line as a CSV row.
 Return value is a list of values as strings."
   (let ((separator (car csv-separator-chars))
@@ -282,18 +282,18 @@ Return value is a list of values as strings."
         (line (buffer-substring-no-properties (point-at-bol) (point-at-eol))))
     (parse-csv-string line separator quote-char)))
 
-(defun c2l-has-header ()
+(defun c2l--has-header ()
   "Return non-nil if the current CSV buffer appears to have a header.
 Essentially, this function just takes the field that should
 contain the amount and checks if it contains something that looks
 like a number."
   (save-mark-and-excursion
     (goto-char (point-min))
-    (let* ((row (c2l-get-current-row))
+    (let* ((row (c2l--get-current-row))
            (fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
       (not (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}"  (alist-get 'amount fields))))))
 
-(defun c2l-get-results-buffer ()
+(defun c2l--get-results-buffer ()
   "Create a results buffer for conversion.
 The buffer is called \"*Csv2Ledger Results*\".  If a buffer with
 this name already exists, it is erased and returned.  Otherwise a
@@ -311,7 +311,7 @@ new buffer is created."
 (defun c2l-set-base-account ()
   "Set `c2l-base-account'."
   (unless c2l--accounts
-    (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
+    (setq c2l--accounts (c2l--read-accounts c2l-accounts-file)))
   (setq c2l-base-account (completing-read "Base account for current buffer: " c2l--accounts)))
 
 ;;;###autoload
@@ -321,11 +321,12 @@ The fields in the row are interpreted according to the template
 in `c2l-csv-columns'."
   (interactive)
   (unless c2l--accounts
-    (setq c2l--accounts (c2l-read-accounts c2l-accounts-file)))
-  (let ((entry (c2l-csv-line-to-ledger (c2l-get-current-row))))
+    (setq c2l--accounts (c2l--read-accounts c2l-accounts-file)))
+  (let ((entry (c2l--csv-line-to-ledger (c2l--get-current-row))))
     (kill-new entry)
     (message entry)))
 
+;;;###autoload
 (defun c2l-convert-region (start end)
   "Convert the CSV entries in the region to ledger entries.
 START and END describe the region.  Note that it is assumed that
@@ -338,13 +339,13 @@ This function always returns nil.  The converted entries are
 placed in the buffer \"*Csv2Ledger Results*\", which is erased
 beforehand if it already exists."
   (interactive "r")
-  (let ((buffer (c2l-get-results-buffer))
+  (let ((buffer (c2l--get-results-buffer))
         (n 0))
     (save-mark-and-excursion
       (goto-char start)
       (beginning-of-line)
       (while (< (point) end)
-        (let ((entry (c2l-csv-line-to-ledger (c2l-get-current-row))))
+        (let ((entry (c2l--csv-line-to-ledger (c2l--get-current-row))))
           (setq n (1+ n))
           (with-current-buffer buffer
             (insert entry "\n")))
@@ -362,7 +363,7 @@ amount can be found in the amount column.)"
   (interactive)
   (let ((beg (save-mark-and-excursion
                (goto-char (point-min))
-               (if (c2l-has-header)
+               (if (c2l--has-header)
                    (forward-line 1))
                (point))))
     (c2l-convert-region beg (point-max))))
