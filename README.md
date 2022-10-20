@@ -114,6 +114,9 @@ You can then add this to `c2l-field-parse-functions`:
         (amount . c2l-convert-postbank-to-ledger-amount)))
 ```
 
+A final variable you may want to set is `c2l-alignment-column`. This should most likely have the same value as `ledger-post-amount-alignment-column`, although `csv2ledger` currently assumes that `ledger-post-amount-alignment-at` is set to `:end` and that the commodity precedes the amount. If either is not true, alignment is probably not optimal.
+
+
 ## Doing the conversion ##
 
 There are three commands to convert CSV lines to ledger entries: `c2l-csv-entry-as-kill` converts the entry point is on and puts the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
