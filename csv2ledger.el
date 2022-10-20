@@ -7,7 +7,7 @@
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
 ;; Version: 1.0
-;; Package-Requires: ((emacs "28.1") (ledger-mode) (parse-csv) (dash "2.19.1"))
+;; Package-Requires: ((emacs "28.1") (parse-csv) (dash "2.19.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -30,7 +30,6 @@
 
 ;;; Code:
 
-(require 'ledger-mode)
 (require 'subr-x)
 (require 'parse-csv)
 (require 'csv-mode)
@@ -310,8 +309,9 @@ new buffer is created."
       (with-current-buffer c2l--results-buffer
         (erase-buffer))
     (setq c2l--results-buffer (get-buffer-create "*Csv2Ledger Results*"))
-    (with-current-buffer c2l--results-buffer
-      (ledger-mode)))
+    (when (fboundp 'ledger-mode)
+      (with-current-buffer c2l--results-buffer
+        (ledger-mode))))
   c2l--results-buffer)
 
 ;;;###autoload
