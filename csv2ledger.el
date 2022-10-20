@@ -134,8 +134,9 @@ returns a match wins."
   :type '(repeat symbol)
   :group 'csv2ledger)
 
-(defcustom c2l-auto-reconcile nil
-  "If non-nil, mark every entry as reconciled."
+(defcustom c2l-auto-cleared nil
+  "If non-nil, mark every entry as cleared.
+This puts an asterisk between the date and the payee."
   :type 'boolean
   :group 'csv2ledger)
 
@@ -198,7 +199,7 @@ reversed.  FROM and TO default to `c2l-fallback-account' and
                                items))
          (title (funcall c2l-title-function parsed-items)))
     (let-alist parsed-items
-      (concat .date (if .valuation (format "=%s " .valuation) "") (if c2l-auto-reconcile " *" "") " " title "\n"
+      (concat .date (if .valuation (format "=%s " .valuation) "") (if c2l-auto-cleared " *" "") " " title "\n"
               (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
               (format "    %s\n" from)
               (format "    %s  " to)
