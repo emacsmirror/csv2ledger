@@ -119,7 +119,7 @@ A final variable you may want to set is `c2l-alignment-column`. This should most
 
 ## Doing the conversion ##
 
-There are three commands to convert CSV lines to ledger entries: `c2l-csv-entry-as-kill` converts the entry point is on and puts the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
+There are three commands to convert CSV transactions to ledger entries: `c2l-csv-entry-as-kill` converts the line point is on and puts the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
 
-The command `c2l-convert-region` and `c2l-convert-buffer` convert the entries in the region or the entire buffer and put the results in a buffer called `*Csv2Ledger Results*`. Each time you call one of these conversion functions, the buffer is cleared, so make sure to save the ledger entries somewhere. You can also simply rename the buffer, Emacs will create a new buffer named `*Csv2Ledger Results*` if it doesn't find an existing one.
+The commands `c2l-convert-region` and `c2l-convert-buffer` convert the entries in the region or the entire buffer and put the results in a buffer called `*Csv2Ledger Results*`. Each time you call one of these conversion functions, the buffer is cleared, so make sure to save the ledger entries somewhere. You can also simply rename the buffer, Emacs will create a new buffer named `*Csv2Ledger Results*` if it doesn't find an existing one.
 
