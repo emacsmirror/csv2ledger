@@ -46,19 +46,20 @@ These are the two options you must set in order to process any CSV files. There 
 
 The first of these is `c2l-account-holder`. This should be a string or regular expression that matches your name, whatever your bank puts in the CSV file when you receive money, i.e., when you are the payee. This is used by `csv2ledger` to determine what to use as the title of a transaction. If you are the payee, it uses the sender, otherwise it uses the payee.
 
-Second, you should set `c2l-fallback-account`. This is the account used as the target account when `csv2ledger` cannot determine a target account. This can be, but does not have to be a true ledger account. You can set it to e.g., `"TODO"`, so that after converting a CSV file you can go through the resulting ledger entries and search for the ones where you still need to provide a target account.
+Second, you may also want to set `c2l-fallback-account`. This is the account used as the target account when `csv2ledger` cannot determine a target account. This can be, but does not have to be a true ledger account. You can set it to e.g., `"Expenses:TODO"`, so that after converting a CSV file you can go through the resulting ledger entries and search for the ones where you still need to provide a target account.
 
 If you do not set `c2l-fallback-account`, conversion of a CSV file will not be entirely automatic: each time `csv2ledger` cannot determine a target account itself (as described below), it will ask you for one. If you prefer this method of operation, leave `c2l-fallback-account` unset.
 
-The option `c2l-accounts-file` can be set to the path of a ledger file containing account declarations. Although `ledger-cli` does not require this, it is good style to define your accounts in a ledger file. Doing so and pointing `c2l-account-file` to it means that whenever `csv2ledger` asks you for an account, it uses completion.
+The option `c2l-accounts-file` can be set to the path of a ledger file containing account declarations. Although `ledger-cli` does not require this, it is good style to define your accounts in a ledger file. Doing so and pointing `c2l-account-file` to it means that whenever `csv2ledger` asks you for an account, it offers your accounts for completion, which saves typing and ensures that you don't make typos in your account names..
 
-If you have set these options, you are basically good to go. `csv2ledger` will convert a CSV file to ledger entries without complaining. However, target accounts will not be set automatically, so you will either have a lot of correcting to do, or you are being pestered by Emacs at every transaction.
+If you have set these options, you are basically good to go. `csv2ledger` will convert a CSV file to ledger entries without complaining. However, you will either have the same target account in each transaction, which is probably not what you want, or Emacs will ask you at every transaction which target account to use. To make this a bit less cumbersome, you can have Emacs try to recognise the target account automatically.
+
 
 ## Automatic target account recognition ##
 
 The automatic target account recognition in `csv2ledger` is admittedly fairly simple, but it works well for me. Essentially, it just checks for the presence of certain strings in an entry's fields. Each search string is associated with a ledger account. The first string that is found provides the target account.
 
-To set this up, you first need to create a TSV file containing match strings and ledger accounts:
+To set this up, you first need to create a TSV (tab-separated values) file containing match strings and ledger accounts:
 
 ```
 aldi          Expenses:Groceries
@@ -66,9 +67,9 @@ lidl          Expenses:Groceries
 restaurant    Expenses:Leisure:Restaurant
 ```
 
-The first column contains the match strings, the second column the ledger account. There can be multiple match strings associated with one account, as shown in the example.
+The first column contains the match strings, the second column the ledger account. There can be multiple match strings associated with one account, as shown in the example. With this file set up, you should point the option `c2l-account-matchers-file` to it so that the matchers can be used to determine the target account.
 
-With this file set up, you should point the option `c2l-account-matchers-file` to it so that the matchers can be used to determine the target account.
+What happens is that Emacs looks at the data for a transaction and check if one of the matchers is present in it. This is simple substring matching: if the string `"lidl"` is in the transaction, the target account is set to Expenses:Groceries.
 
 By default, `csv2ledger` only checks the `payee` and `description` fields in the CSV file for matches, but this can be configured with the option `c2l-title-match-fields`. I personally set this option to the following value:
 
@@ -91,7 +92,7 @@ Depending on the format of your CSV file, it may also be necessary to set the va
 
 I have a similar problem with the amount. In the CSV file, amounts are given as follows: `3.150,20 €` or `-240,71 €`. I need to remove the dots and replace the decimal comma with a decimal dot. Furthermore, in my ledger file, the commodity € comes before the amount, but after the minus sign.
 
-Since this is a very particular conversion, there is no function for it included in `csv2ledger`, but if you face the same problem, you can use the following (or adapt it, if your problem is similar):
+Since this is a very particular conversion, there is no function for it included in `csv2ledger`, but if you face the same problem, you can use or adapt the following:
 
 ```
 (defun c2l-convert-postbank-to-ledger-amount (amount)
@@ -112,3 +113,10 @@ You can then add this to `c2l-field-parse-functions`:
       '((date . c2l-convert-little-endian-to-iso8601-date)
         (amount . c2l-convert-postbank-to-ledger-amount)))
 ```
+
+## Doing the conversion ##
+
+There are three commands to convert CSV lines to ledger entries: `c2l-csv-entry-as-kill` converts the entry point is on and puts the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
+
+The command `c2l-convert-region` and `c2l-convert-buffer` convert the entries in the region or the entire buffer and put the results in a buffer called `*Csv2Ledger Results*`. Each time you call one of these conversion functions, the buffer is cleared, so make sure to save the ledger entries somewhere. You can also simply rename the buffer, Emacs will create a new buffer named `*Csv2Ledger Results*` if it doesn't find an existing one.
+
