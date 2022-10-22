@@ -125,6 +125,17 @@ the corresponding account is used to book the transaction."
   :type 'file
   :group 'csv2ledger)
 
+(defvar c2l-matcher-regexes nil
+  "Alist of accounts and their matchers.
+Each item should be a cons cell of an account name and a regular
+expression.  If the regular expression matches any of the fields
+in `c2l-balancing-match-fields', its corresponding account is
+used as the balancing account.
+
+This variable is normally given a value based on the matchers in
+`c2l-account-matchers-file', but you can also set in directly if
+you prefer to use regexes to match account.")
+
 (defcustom c2l-balancing-match-fields '(payee description)
   "List of fields used for determining the balancing account.
 Fields in this list are matched against the matchers in
@@ -148,7 +159,6 @@ This should most likely be set to the same value as
   :group 'csv2ledger)
 
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
-(defvar c2l--compiled-matcher-regexes nil "Alist of accounts and their matchers.")
 (defvar c2l--results-buffer nil "Buffer for conversion results.")
 
 (defun c2l-convert-little-endian-to-iso8601-date (date)
@@ -253,14 +263,14 @@ for that account."
 
 (defun c2l--match-account (str)
   "Try to match STR to an account."
-  (unless c2l--compiled-matcher-regexes
-    (setq c2l--compiled-matcher-regexes
+  (unless c2l-matcher-regexes
+    (setq c2l-matcher-regexes
           (-> c2l-account-matchers-file
               (c2l--read-account-matchers)
               (c2l--compile-matcher-regexes))))
   (--some (if (string-match-p (cdr it) str)
               (car it))
-          c2l--compiled-matcher-regexes))
+          c2l-matcher-regexes))
 
 (defun c2l--csv-line-to-ledger (row)
   "Convert ROW to a ledger entry.
