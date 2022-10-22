@@ -62,10 +62,10 @@ files are processed."
   :group 'csv2ledger
   :local t)
 
-(defcustom c2l-fallback-account nil
-  "Fallback account for ledger transactions.
+(defcustom c2l-fallback-balancing-account nil
+  "Fallback for the balancing account in transactions.
 When creating a ledger entry, csv2ledger tries to determine the
-opposite account for the transaction based on the matchers in
+balancing account for the transaction based on the matchers in
 `c2l-account-matchers-file'.  If no acccount is found, the value
 of this variable is used.  If the value is unset, the user is
 asked for an account."
@@ -125,8 +125,8 @@ the corresponding account is used to book the transaction."
   :type 'file
   :group 'csv2ledger)
 
-(defcustom c2l-title-match-fields '(payee description)
-  "List of fields used for matching the target account.
+(defcustom c2l-balancing-match-fields '(payee description)
+  "List of fields used for determining the balancing account.
 Fields in this list are matched against the matchers in
 `c2l-account-matchers-file'.  Note that the order of the fields
 in this list can be relevant, because the first field that
@@ -187,9 +187,9 @@ comment, preceded by \"Desc:\".
 
 FROM is the account where the money comes from, TO the account to
 which it goes.  Note that if AMOUNT is negative, these roles are
-reversed.  FROM and TO default to `c2l-fallback-account' and
+reversed.  FROM and TO default to `c2l-fallback-balancing-account' and
 `c2l-base-account', respectively."
-  (or from (setq from c2l-fallback-account))
+  (or from (setq from c2l-fallback-balancing-account))
   (or to (setq to c2l-base-account))
   (let* ((parsed-items (mapcar (lambda (item)
                                  (let ((field (car item))
@@ -269,11 +269,11 @@ strings are interpreted according to the template in
 `c2l-csv-columns'.  The transaction is booked to the account in
 `c2l-base-account'.  The reverse account is determined on the
 basis of the matchers in `c2l-account-matchers-file'.  If none is
-found, the value of `c2l-fallback-account' is used.  If that
-option is unset, the user is asked for an account."
+found, the value of `c2l-fallback-balancing-account' is used.  If
+that option is unset, the user is asked for an account."
   (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
-         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-title-match-fields) fields)))
-                      c2l-fallback-account
+         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-balancing-match-fields) fields)))
+                      c2l-fallback-balancing-account
                       (completing-read (format "Account for transaction %s, %s «%.75s» "
                                                (funcall c2l-title-function fields)
                                                (alist-get 'amount fields)
