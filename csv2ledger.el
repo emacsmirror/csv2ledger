@@ -84,7 +84,30 @@ instead of the payee as the title of the entry."
 The data in the CSV file is extracted based on this list.  The
 order of elements in the list should therefore represent the
 order of columns in the CSV file.  A column that is not relevant
-can be labeled with an underscore."
+can be labeled with an underscore.
+
+Valid column names are the following:
+
+- `date': booking date of the transaction
+- `effective': effective date of the transaction
+- `description': whatever the bank provides
+- `sender': the initiator of the payment
+- `payee': the party receiving the payment
+- `counterpart': the other party in the transaction
+- `amount': the amount of the payment (positive or negative)
+- `credit': the amount received
+- `debit': the amount payed
+
+Other column names can be added, but they cannot be used directly
+in the transaction.  They may be used in `c2l-title-match-fields'
+or in custom functions for the options `c2l-title-function' and
+`c2l-amount-function', however.
+
+It is assumed that a CSV file contains either `payee' and
+`sender' columns or a `counterpart' column, but not both, and
+similarly, that it contains either an `amount' column or `credit'
+and `debit' columns.  You should set `c2l-title-function' and
+`c2l-amount-function' to match what is valid for your CSV files."
   :type '(repeat symbol)
   :group 'csv2ledger)
 
