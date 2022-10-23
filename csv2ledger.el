@@ -373,14 +373,16 @@ Return value is a list of values as strings."
 
 (defun c2l--has-header ()
   "Return non-nil if the current CSV buffer appears to have a header.
-Essentially, this function just takes the field that should
-contain the amount and checks if it contains something that looks
-like a number."
+Essentially, this function just checks the fields `amount',
+`credit' and `debit' and returns non-nil if either one of these
+contains something that looks like a amount."
   (save-mark-and-excursion
     (goto-char (point-min))
     (let* ((row (c2l--get-current-row))
            (fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
-      (not (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}"  (alist-get 'amount fields))))))
+      (not (or (c2l--amount-p (alist-get 'amount fields ""))
+               (c2l--amount-p (alist-get 'credit fields ""))
+               (c2l--amount-p (alist-get 'debit fields "")))))))
 
 (defun c2l--get-results-buffer ()
   "Create a results buffer for conversion.
