@@ -277,9 +277,9 @@ for that account."
 ROW contains the data of the entry as a list of strings.  The
 strings are interpreted according to the template in
 `c2l-csv-columns'.  The transaction is booked to the account in
-`c2l-base-account'.  The reverse account is determined on the
+`c2l-base-account'.  The balancing account is determined on the
 basis of the matchers in `c2l-account-matchers-file'.  If none is
-found, the value of `c2l-fallback-balancing-account' is used.  If
+found, the value of `c2l-fallback-account' is used.  If
 that option is unset, the user is asked for an account."
   (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
          (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-balancing-match-fields) fields)))
