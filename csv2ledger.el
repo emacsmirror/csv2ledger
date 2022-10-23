@@ -99,9 +99,9 @@ Valid column names are the following:
 - `debit': the amount payed
 
 Other column names can be added, but they cannot be used directly
-in the transaction.  They may be used in `c2l-title-match-fields'
-or in custom functions for the options `c2l-title-function' and
-`c2l-amount-function', however.
+in the transaction.  They may be used in the option
+`c2l-balancing-match-fields' or in custom functions for the
+options `c2l-title-function' and `c2l-amount-function', however.
 
 It is assumed that a CSV file contains either `payee' and
 `sender' columns or a `counterpart' column, but not both, and
@@ -148,8 +148,9 @@ restaurant    Expenses:Leisure:Restaurant
 where the two columns are separated by a TAB.
 
 The matcher is a string (not a regular expression).  If a matcher
-is found in any of the fields listed in `c2l-title-match-fields',
-the corresponding account is used to book the transaction."
+is found in any of the fields listed in the option
+`c2l-balancing-match-fields', the corresponding account is used
+to book the transaction."
   :type 'file
   :group 'csv2ledger)
 
