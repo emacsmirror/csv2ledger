@@ -120,7 +120,7 @@ for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
-(defcustom c2l-title-function #'c2l-payee-or-sender
+(defcustom c2l-title-function #'c2l-title-is-payee-or-sender
   "Function to create a title.
 The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
@@ -194,21 +194,22 @@ format, it just splits DATE on the separator, reverses the date
 parts and joins them again, using a hyphen as separator."
   (string-join (nreverse (split-string date "[./-]" t "[[:space:]]")) "-"))
 
-(defun c2l-payee-or-sender (entry)
+(defun c2l-title-is-payee-or-sender (transaction)
   "Return payee or sender based on `c2l-account-holder'.
 This function is for use as the value of `c2l-title-function'.
-ENTRY should be an alist containing field-value pairs for an
-entry and should contain values for `payee' and `sender'.  If the
-value of `c2l-account-holder' matches the payee, the sender is
-returned, otherwise the payee is returned."
-  (when (stringp c2l-account-holder)
-    (let ((payee (alist-get 'payee entry))
-          (sender (alist-get 'sender entry)))
-      (if (string-match-p c2l-account-holder payee)
-          sender
-        payee))))
 
 (defun c2l--compose-entry (items &optional from to)
+TRANSACTION should be an alist containing field-value pairs and
+should contain values for `payee' and `sender'.  If the value of
+`c2l-account-holder' matches the payee, the sender is returned,
+otherwise the payee is returned."
+  (let ((payee (alist-get 'payee transaction))
+        (sender (alist-get 'sender transaction)))
+    (if (stringp c2l-account-holder)
+        (if (string-match-p c2l-account-holder payee)
+            sender
+          payee)
+      payee)))
   "Create a ledger entry.
 ITEMS is an alist containing (key . value) pairs that should be
 included in the entry.  It should contain values for the keys
