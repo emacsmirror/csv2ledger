@@ -253,40 +253,31 @@ make sure to add one using `c2l-field-parse-functions'."
       (c2l--amount-p (alist-get 'debit transaction ""))
       "0.00"))
 
-(defun c2l--compose-entry (items &optional from to)
 ;;; Helper functions
 
 (defun c2l--amount-p (str)
   "Return non-nil is STR is likely to be an amount."
   (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}" str))
 
+(defun c2l--compose-entry (transaction)
   "Create a ledger entry.
-ITEMS is an alist containing (key . value) pairs that should be
-included in the entry.  It should contain values for the keys
-`date', `payee', `sender' and `amount'.  ITEMS may also contain a
-value for `description'.  If it is present, it is added as a
-comment, preceded by \"Desc:\".
-
-FROM is the account where the money comes from, TO the account to
-which it goes.  Note that if AMOUNT is negative, these roles are
-reversed.  FROM and TO default to `c2l-fallback-account' and
-`c2l-base-account', respectively."
-  (or from (setq from c2l-fallback-account))
-  (or to (setq to c2l-base-account))
-  (let* ((parsed-items (mapcar (lambda (item)
-                                 (let ((field (car item))
-                                       (value (cdr item)))
-                                   (cons field
-                                         (funcall (alist-get field c2l-field-parse-functions #'identity) value))))
-                               items))
-         (title (funcall c2l-title-function parsed-items)))
-    (let-alist parsed-items
-      (concat .date (if .valuation (format "=%s " .valuation) "") (if c2l-auto-cleared " *" "") " " title "\n"
-              (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
-              (format "    %s\n" from)
-              (format "    %s  " to)
-              (make-string (- c2l-alignment-column 4 (length to) 2 (length .amount)) ?\s)
-              .amount "\n"))))
+TRANSACTION is an alist containing (key . value) pairs that will
+be included in the entry.  It should at least contain values for
+the keys `date', `title', `amount' and `account'.  TRANSACTION
+may also contain a value for `effective' and `description'.  If
+`effective' is present, it is added as the effective date for the
+entry and the entry is marked as cleared.  If `description' is
+present, it is added as a comment, preceded by \"Desc:\".  If
+`c2l-auto-cleared' is non-nil, the entry is always marked as
+cleared, even if there is no value for `effective' in
+TRANSACTION."
+  (let-alist transaction
+    (concat .date (if .effective (format "=%s " .effective) "") (if (or .effective c2l-auto-cleared) " *" "") " " .title "\n"
+            (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
+            (format "    %s\n" .account)
+            (format "    %s  " c2l-base-account)
+            (make-string (- c2l-alignment-column 4 (length c2l-base-account) 2 (length .amount)) ?\s)
+            .amount "\n")))
 
 (defun c2l--read-accounts (file)
   "Read list of accounts from FILE."
@@ -354,14 +345,25 @@ basis of the matchers in `c2l-account-matchers-file'.  If none is
 found, the value of `c2l-fallback-account' is used.  If
 that option is unset, the user is asked for an account."
   (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
-         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-balancing-match-fields) fields)))
+         (parsed-fields (mapcar (lambda (item)
+                                  (let ((field (car item))
+                                        (value (cdr item)))
+                                    (cons field
+                                          (funcall (alist-get field c2l-field-modify-functions #'identity) value))))
+                                fields))
+         (title (funcall c2l-title-function parsed-fields))
+         (amount (funcall c2l-amount-function parsed-fields))
+         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-balancing-match-fields) parsed-fields)))
                       c2l-fallback-account
                       (completing-read (format "Account for transaction %s, %s «%.75s» "
-                                               (funcall c2l-title-function fields)
-                                               (alist-get 'amount fields)
-                                               (alist-get 'description fields))
+                                               (funcall c2l-title-function parsed-fields)
+                                               (alist-get 'amount parsed-fields)
+                                               (alist-get 'description parsed-fields))
                                        c2l--accounts))))
-    (c2l--compose-entry fields account)))
+    (push (cons 'account account) parsed-fields)
+    (push (cons 'title title) parsed-fields)
+    (push (cons 'amount amount) parsed-fields)
+    (c2l--compose-entry parsed-fields)))
 
 (defun c2l--get-current-row ()
   "Read the current line as a CSV row.
