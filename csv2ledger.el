@@ -209,7 +209,18 @@ otherwise the payee is returned."
           payee)
       payee)))
 
+<<<<<<< HEAD
 (defun c2l--compose-entry (items &optional from to)
+=======
+(defun c2l-title-is-counterpart (transaction)
+  "Return the counterpart of an entry.
+This function is for use as the value of `c2l-title-function'.
+TRANSACTION should be an alist containing field-value pairs and
+should contain a value for `counterpart', which is the return
+value.  If `counterpart' does not have a value, this function
+returns \"Unknown\"."
+  (alist-get 'counterpart transaction "Unknown"))
+>>>>>>> Add function c2l-title-is-counterpart.
   "Create a ledger entry.
 ITEMS is an alist containing (key . value) pairs that should be
 included in the entry.  It should contain values for the keys
