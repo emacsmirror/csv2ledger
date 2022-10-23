@@ -62,7 +62,7 @@ files are processed."
   :group 'csv2ledger
   :local t)
 
-(defcustom c2l-fallback-balancing-account nil
+(defcustom c2l-fallback-account nil
   "Fallback for the balancing account in transactions.
 When creating a ledger entry, csv2ledger tries to determine the
 balancing account for the transaction based on the matchers in
@@ -197,9 +197,9 @@ comment, preceded by \"Desc:\".
 
 FROM is the account where the money comes from, TO the account to
 which it goes.  Note that if AMOUNT is negative, these roles are
-reversed.  FROM and TO default to `c2l-fallback-balancing-account' and
+reversed.  FROM and TO default to `c2l-fallback-account' and
 `c2l-base-account', respectively."
-  (or from (setq from c2l-fallback-balancing-account))
+  (or from (setq from c2l-fallback-account))
   (or to (setq to c2l-base-account))
   (let* ((parsed-items (mapcar (lambda (item)
                                  (let ((field (car item))
@@ -283,7 +283,7 @@ found, the value of `c2l-fallback-account' is used.  If
 that option is unset, the user is asked for an account."
   (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
          (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-balancing-match-fields) fields)))
-                      c2l-fallback-balancing-account
+                      c2l-fallback-account
                       (completing-read (format "Account for transaction %s, %s «%.75s» "
                                                (funcall c2l-title-function fields)
                                                (alist-get 'amount fields)
