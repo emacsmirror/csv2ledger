@@ -111,15 +111,12 @@ and `debit' columns.  You should set `c2l-title-function' and
   :type '(repeat symbol)
   :group 'csv2ledger)
 
-(defcustom c2l-field-parse-functions '((date        . identity)
-                                       (valuation   . identity)
-                                       (description . identity)
-                                       (sender      . identity)
-                                       (payee       . identity)
-                                       (amount      . identity))
+(defcustom c2l-field-modify-functions nil
   "List of functions to modify fields in an entry.
-These functions should take a single string argument and should
-return a string."
+This option should be an alist mapping field names (as symbols)
+to functions.  These functions should take a single string
+argument and should return a string, which will be the value used
+for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
