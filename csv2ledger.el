@@ -197,8 +197,6 @@ parts and joins them again, using a hyphen as separator."
 (defun c2l-title-is-payee-or-sender (transaction)
   "Return payee or sender based on `c2l-account-holder'.
 This function is for use as the value of `c2l-title-function'.
-
-(defun c2l--compose-entry (items &optional from to)
 TRANSACTION should be an alist containing field-value pairs and
 should contain values for `payee' and `sender'.  If the value of
 `c2l-account-holder' matches the payee, the sender is returned,
@@ -210,6 +208,8 @@ otherwise the payee is returned."
             sender
           payee)
       payee)))
+
+(defun c2l--compose-entry (items &optional from to)
   "Create a ledger entry.
 ITEMS is an alist containing (key . value) pairs that should be
 included in the entry.  It should contain values for the keys
