@@ -184,13 +184,14 @@ This should most likely be set to the same value as
 (defun c2l-convert-little-endian-to-iso8601-date (date)
   "Convert DATE from a little-endian format to an ISO 8601 format.
 DATE should be a string representing a date of the form
-DD.MM.YYYY.  Return value is a date string of the form YYYY-MM-DD.
+DD.MM.YYYY, DD/MM/YYYY or DD-MM-YYYY.  Return value is a date
+string of the form YYYY-MM-DD.
 
 Note that the input date may have dots, dashes or forward slashes
 separating the date parts; also, additional whitespace is
 removed.  This function does not check if DATE has a valid date
 format, it just splits DATE on the separator, reverses the date
-parts and joins them again."
+parts and joins them again, using a hyphen as separator."
   (string-join (nreverse (split-string date "[./-]" t "[[:space:]]")) "-"))
 
 (defun c2l-payee-or-sender (entry)
