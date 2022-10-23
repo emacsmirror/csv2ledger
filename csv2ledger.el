@@ -124,7 +124,15 @@ for the field in question."
   "Function to create a title.
 The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
-returned is used as the title of the ledger entry,"
+returned is used as the title of the ledger entry."
+  :type 'function
+  :group 'csv2ledger)
+
+(defcustom c2l-amount-function #'c2l-amount-is-amount
+  "Function to create the amount.
+The function should take as argument an entry alist of
+field-value pairs and should return a string.  The string
+returned is used as the amount of the ledger entry."
   :type 'function
   :group 'csv2ledger)
 
@@ -209,9 +217,6 @@ otherwise the payee is returned."
           payee)
       payee)))
 
-<<<<<<< HEAD
-(defun c2l--compose-entry (items &optional from to)
-=======
 (defun c2l-title-is-counterpart (transaction)
   "Return the counterpart of an entry.
 This function is for use as the value of `c2l-title-function'.
@@ -220,7 +225,33 @@ should contain a value for `counterpart', which is the return
 value.  If `counterpart' does not have a value, this function
 returns \"Unknown\"."
   (alist-get 'counterpart transaction "Unknown"))
->>>>>>> Add function c2l-title-is-counterpart.
+
+(defun c2l-amount-is-amount (transaction)
+  "Return the amount of an entry.
+This function is for use as the value of `c2l-amount-function'.
+TRANSACTION should be an alist containing field-value pairs and
+should contain a value for `amount', which is the return value.
+If `amount' does not contain a value, this function returns
+\"0.00\"."
+  (alist-get 'amount transaction "0.00"))
+
+(defun c2l-amount-is-credit-or-debit (transaction)
+  "Return the amount of an entry.
+This function is for use as the value of `c2l-amount-function'.
+TRANSACTION should be an alist containing field-value pairs and
+should contain values for `credit' and `debit'.  Whichever of
+these two looks like an amount (using `c2l--amount-p') is
+returned.  If neither contains an amount, the value \"0.00\" is
+returned.
+
+Note that a debit amount should have a negative value, i.e., it
+should be preceded by a minus sign.  If this is not the case,
+make sure to add one using `c2l-field-parse-functions'."
+  (or (c2l--amount-p (alist-get 'credit transaction ""))
+      (c2l--amount-p (alist-get 'debit transaction ""))
+      "0.00"))
+
+(defun c2l--compose-entry (items &optional from to)
   "Create a ledger entry.
 ITEMS is an alist containing (key . value) pairs that should be
 included in the entry.  It should contain values for the keys
