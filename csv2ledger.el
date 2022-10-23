@@ -47,7 +47,7 @@ can be a separate file or a ledger file containing transactions."
   :type 'file
   :group 'csv2ledger)
 
-(defcustom c2l-base-account nil
+(defcustom c2l-base-account "Assets:Unknown"
   "Base ledger account.
 A CSV file normally lists transactions for a single bank account.
 The base ledger account is the ledger account associated with
