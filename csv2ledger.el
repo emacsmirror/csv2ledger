@@ -254,6 +254,12 @@ make sure to add one using `c2l-field-parse-functions'."
       "0.00"))
 
 (defun c2l--compose-entry (items &optional from to)
+;;; Helper functions
+
+(defun c2l--amount-p (str)
+  "Return non-nil is STR is likely to be an amount."
+  (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}" str))
+
   "Create a ledger entry.
 ITEMS is an alist containing (key . value) pairs that should be
 included in the entry.  It should contain values for the keys
