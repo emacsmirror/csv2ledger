@@ -189,6 +189,8 @@ This should most likely be set to the same value as
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--results-buffer nil "Buffer for conversion results.")
 
+;;; Functions for use as values of customisation options.
+
 (defun c2l-convert-little-endian-to-iso8601-date (date)
   "Convert DATE from a little-endian format to an ISO 8601 format.
 DATE should be a string representing a date of the form
