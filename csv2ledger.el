@@ -120,6 +120,17 @@ set them directly."
            (c2l-set-options)))
   :group 'csv2ledger)
 
+(defcustom c2l-transaction-modify-function #'identity
+  "Function to modify a transaction.
+This should be a single function that takes an alist representing
+a transaction and returns a modified alist.  Any kind of
+modification is possible, including modifying, adding or deleting
+fields.  Importantly, because the function is passed the entire
+entry, it is possible to modify or create a field based on the
+values of other fields."
+  :type 'function
+  :group 'csv2ledger)
+
 (defcustom c2l-field-modify-functions nil
   "List of functions to modify fields in an entry.
 This option should be an alist mapping field names (as symbols)
@@ -360,8 +371,15 @@ strings are interpreted according to the template in
 `c2l-base-account'.  The target account is determined on the
 basis of the matchers in `c2l-account-matchers-file'.  If none is
 found, the value of `c2l-fallback-account' is used.  If that
-option is unset, the user is asked for an account."
-  (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
+option is unset, the user is asked for an account.
+
+This function first creates an alist of field-value pairs, then
+passes it to `c2l-transaction-modify-function' and subsequently
+applies the functions in `c2l-field-modify-functions' to the
+individual fields.  After that, the `title' and `account' fields
+are added.  Additionally, the `amount' field is added or, if
+already, present, its value is updated."
+  (let* ((fields (funcall c2l-transaction-modify-function (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
          (parsed-fields (mapcar (lambda (item)
                                   (let ((field (car item))
                                         (value (cdr item)))
@@ -379,7 +397,9 @@ option is unset, the user is asked for an account."
                                        c2l--accounts))))
     (push (cons 'account account) parsed-fields)
     (push (cons 'title title) parsed-fields)
-    (push (cons 'amount amount) parsed-fields)
+    (if (assq 'amount parsed-fields)
+        (setf (alist-get 'amount parsed-fields) amount)
+      (push (cons 'amount amount) parsed-fields))
     (c2l--compose-entry parsed-fields)))
 
 (defun c2l--get-current-row ()
