@@ -438,6 +438,8 @@ new buffer is created."
         (ledger-mode))))
   c2l--results-buffer)
 
+;;; Interactive functions
+
 ;;;###autoload
 (defun c2l-set-base-account ()
   "Set `c2l-base-account'."
