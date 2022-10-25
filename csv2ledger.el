@@ -52,15 +52,9 @@ can be a separate file or a ledger file containing transactions."
 A CSV file normally lists transactions for a single bank account.
 The base ledger account is the ledger account associated with
 this bank account.  As such, it is the account that will turn up
-in every transaction read from the CSV file.
-
-This is a buffer-local variable and can be set in the local
-variable block of a CSV file.  Alternatively, one can set a
-default value if one only has one back account from which CSV
-files are processed."
+in every transaction read from the CSV file."
   :type 'file
-  :group 'csv2ledger
-  :local t)
+  :group 'csv2ledger)
 
 (defcustom c2l-fallback-account nil
   "Fallback for the target or balancing account in transactions.
