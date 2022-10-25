@@ -63,9 +63,9 @@ files are processed."
   :local t)
 
 (defcustom c2l-fallback-account nil
-  "Fallback for the balancing account in transactions.
+  "Fallback for the target or balancing account in transactions.
 When creating a ledger entry, csv2ledger tries to determine the
-balancing account for the transaction based on the matchers in
+target account for the transaction based on the matchers in
 `c2l-account-matchers-file'.  If no acccount is found, the value
 of this variable is used.  If the value is unset, the user is
 asked for an account."
@@ -104,8 +104,8 @@ Valid column names are the following:
 
 Other column names can be added, but they cannot be used directly
 in the transaction.  They may be used in the option
-`c2l-balancing-match-fields' or in custom functions for the
-options `c2l-title-function' and `c2l-amount-function', however.
+`c2l-target-match-fields' or in custom functions for the options
+`c2l-title-function' and `c2l-amount-function', however.
 
 It is assumed that a CSV file contains either `payee' and
 `sender' columns or a `counterpart' column, but not both, and
@@ -172,8 +172,8 @@ where the two columns are separated by a TAB.
 
 The matcher is a string (not a regular expression).  If a matcher
 is found in any of the fields listed in the option
-`c2l-balancing-match-fields', the corresponding account is used
-to book the transaction."
+`c2l-target-match-fields', the corresponding account is used to
+book the transaction."
   :type 'file
   :group 'csv2ledger)
 
@@ -181,19 +181,19 @@ to book the transaction."
   "Alist of matcher regexes and their acounts.
 Each item should be a cons cell of a regular expression and an
 account name.  If the regular expression matches any of the
-fields in `c2l-balancing-match-fields', its corresponding account
-is used as the balancing account.
+fields in `c2l-target-match-fields', its corresponding account is
+used as the target account.
 
 This variable is normally given a value based on the matchers in
 `c2l-account-matchers-file', but you can also set in directly if
 you prefer to use regexes to match accounts.")
 
-(defcustom c2l-balancing-match-fields '(payee description)
-  "List of fields used for determining the balancing account.
+(defcustom c2l-target-match-fields '(payee description)
+  "List of fields used for determining the target account.
 Fields in this list are matched against the matchers in
 `c2l-account-matchers-file'.  Note that the order of the fields
 in this list can be relevant, because the first field that
-returns a match wins."
+returns a match is used as the target account."
   :type '(repeat symbol)
   :group 'csv2ledger)
 
@@ -363,10 +363,10 @@ for that account."
 ROW contains the data of the entry as a list of strings.  The
 strings are interpreted according to the template in
 `c2l-csv-columns'.  The transaction is booked to the account in
-`c2l-base-account'.  The balancing account is determined on the
+`c2l-base-account'.  The target account is determined on the
 basis of the matchers in `c2l-account-matchers-file'.  If none is
-found, the value of `c2l-fallback-account' is used.  If
-that option is unset, the user is asked for an account."
+found, the value of `c2l-fallback-account' is used.  If that
+option is unset, the user is asked for an account."
   (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
          (parsed-fields (mapcar (lambda (item)
                                   (let ((field (car item))
@@ -376,7 +376,7 @@ that option is unset, the user is asked for an account."
                                 fields))
          (title (funcall c2l-title-function parsed-fields))
          (amount (funcall c2l-amount-function parsed-fields))
-         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-balancing-match-fields) parsed-fields)))
+         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-target-match-fields) parsed-fields)))
                       c2l-fallback-account
                       (completing-read (format "Account for transaction %s, %s «%.75s» "
                                                (funcall c2l-title-function parsed-fields)
