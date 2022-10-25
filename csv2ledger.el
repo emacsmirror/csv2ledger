@@ -155,11 +155,11 @@ to book the transaction."
   :group 'csv2ledger)
 
 (defvar c2l-matcher-regexes nil
-  "Alist of accounts and their matchers.
-Each item should be a cons cell of an account name and a regular
-expression.  If the regular expression matches any of the fields
-in `c2l-balancing-match-fields', its corresponding account is
-used as the balancing account.
+  "Alist of matcher regexes and their acounts.
+Each item should be a cons cell of a regular expression and an
+account name.  If the regular expression matches any of the
+fields in `c2l-balancing-match-fields', its corresponding account
+is used as the balancing account.
 
 This variable is normally given a value based on the matchers in
 `c2l-account-matchers-file', but you can also set in directly if
@@ -321,8 +321,8 @@ times.  Return value is an alist in which each account in
 ACCOUNTS is mapped to a regular expression matching all matchers
 for that account."
   (mapcar (lambda (e)
-            (cons (car e)
-                  (regexp-opt (mapcar #'car (cdr e)))))
+            (cons (regexp-opt (mapcar #'car (cdr e)))
+                  (car e)))
           (seq-group-by #'cdr accounts)))
 
 (defun c2l--match-account (str)
@@ -332,8 +332,8 @@ for that account."
           (-> c2l-account-matchers-file
               (c2l--read-account-matchers)
               (c2l--compile-matcher-regexes))))
-  (--some (if (string-match-p (cdr it) str)
-              (car it))
+  (--some (if (string-match-p (car it) str)
+              (cdr it))
           c2l-matcher-regexes))
 
 (defun c2l--csv-line-to-ledger (row)
