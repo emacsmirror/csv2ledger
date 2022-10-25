@@ -79,6 +79,10 @@ instead of the payee as the title of the entry."
   :type 'string
   :group 'csv2ledger)
 
+(defun c2l-set-options ()
+  "Set the Csv2Ledger options dependent on `c2l-csv-columns'."
+  (mapc #'custom-reevaluate-setting '(c2l-amount-function c2l-title-function)))
+
 (defcustom c2l-csv-columns '(date effective description sender payee amount)
   "List of columns in the CSV file.
 The data in the CSV file is extracted based on this list.  The
@@ -107,8 +111,19 @@ It is assumed that a CSV file contains either `payee' and
 `sender' columns or a `counterpart' column, but not both, and
 similarly, that it contains either an `amount' column or `credit'
 and `debit' columns.  You should set `c2l-title-function' and
-`c2l-amount-function' to match what is valid for your CSV files."
+`c2l-amount-function' to match what is valid for your CSV files.
+
+The options `c2l-title-function' and `c2l-amount-function' are
+dependent on the value of this variable.  If you update this
+variable in your init file without using Customize, make sure to
+call `c2l-set-options' to set the dependent variables as well, or
+set them directly."
   :type '(repeat symbol)
+  :initialize 'custom-initialize-default
+  :set (lambda (symbol value)
+         (unless (equal value (eval symbol))
+           (custom-set-default symbol value)
+           (c2l-set-options)))
   :group 'csv2ledger)
 
 (defcustom c2l-field-modify-functions nil
@@ -120,21 +135,29 @@ for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
-(defcustom c2l-title-function #'c2l-title-is-payee-or-sender
+(defcustom c2l-title-function
+  (if (memq 'counterpart c2l-csv-columns)
+      #'c2l-title-is-counterpart
+    #'c2l-title-is-payee-or-sender)
   "Function to create a title.
 The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
 returned is used as the title of the ledger entry."
   :type 'function
-  :group 'csv2ledger)
+  :group 'csv2ledger
+  :set-after '(c2l-csv-columns))
 
-(defcustom c2l-amount-function #'c2l-amount-is-amount
+(defcustom c2l-amount-function
+  (if (memq 'amount c2l-csv-columns)
+      #'c2l-amount-is-amount
+    #'c2l-amount-is-credit-or-debit)
   "Function to create the amount.
 The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
 returned is used as the amount of the ledger entry."
   :type 'function
-  :group 'csv2ledger)
+  :group 'csv2ledger
+  :set-after '(c2l-csv-columns))
 
 (defcustom c2l-account-matchers-file nil
   "File containing matcher strings mapped to accounts.
