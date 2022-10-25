@@ -380,27 +380,27 @@ individual fields.  After that, the `title' and `account' fields
 are added.  Additionally, the `amount' field is added or, if
 already, present, its value is updated."
   (let* ((fields (funcall c2l-transaction-modify-function (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
-         (parsed-fields (mapcar (lambda (item)
-                                  (let ((field (car item))
-                                        (value (cdr item)))
-                                    (cons field
-                                          (funcall (alist-get field c2l-field-modify-functions #'identity) value))))
-                                fields))
-         (title (funcall c2l-title-function parsed-fields))
-         (amount (funcall c2l-amount-function parsed-fields))
-         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-target-match-fields) parsed-fields)))
+         (modified-fields (mapcar (lambda (item)
+                                    (let ((field (car item))
+                                          (value (cdr item)))
+                                      (cons field
+                                            (funcall (alist-get field c2l-field-modify-functions #'identity) value))))
+                                  fields))
+         (title (funcall c2l-title-function modified-fields))
+         (amount (funcall c2l-amount-function modified-fields))
+         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-target-match-fields) modified-fields)))
                       c2l-fallback-account
                       (completing-read (format "Account for transaction %s, %s «%.75s» "
-                                               (funcall c2l-title-function parsed-fields)
-                                               (alist-get 'amount parsed-fields)
-                                               (alist-get 'description parsed-fields))
+                                               (funcall c2l-title-function modified-fields)
+                                               (alist-get 'amount modified-fields)
+                                               (alist-get 'description modified-fields))
                                        c2l--accounts))))
-    (push (cons 'account account) parsed-fields)
-    (push (cons 'title title) parsed-fields)
-    (if (assq 'amount parsed-fields)
-        (setf (alist-get 'amount parsed-fields) amount)
-      (push (cons 'amount amount) parsed-fields))
-    (c2l--compose-entry parsed-fields)))
+    (push (cons 'account account) modified-fields)
+    (push (cons 'title title) modified-fields)
+    (if (assq 'amount modified-fields)
+        (setf (alist-get 'amount modified-fields) amount)
+      (push (cons 'amount amount) modified-fields))
+    (c2l--compose-entry modified-fields)))
 
 (defun c2l--get-current-row ()
   "Read the current line as a CSV row.
