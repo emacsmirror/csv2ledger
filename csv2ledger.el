@@ -373,7 +373,7 @@ basis of the matchers in `c2l-account-matchers-file'.  If none is
 found, the value of `c2l-fallback-account' is used.  If that
 option is unset, the user is asked for an account.
 
-This function first creates an alist of field-value pairs, then
+This function first creates an alist of field-value pairs,
 passes it to `c2l-transaction-modify-function' and subsequently
 applies the functions in `c2l-field-modify-functions' to the
 individual fields.  After that, the `title' and `account' fields
