@@ -93,7 +93,7 @@ can be labeled with an underscore.
 Valid column names are the following:
 
 - `date': booking date of the transaction
-- `effective': effective date of the transaction
+- `posted': effective date of the transaction
 - `description': whatever the bank provides
 - `sender': the initiator of the payment
 - `payee': the party receiving the payment
@@ -288,15 +288,14 @@ make sure to add one using `c2l-field-parse-functions'."
 TRANSACTION is an alist containing (key . value) pairs that will
 be included in the entry.  It should at least contain values for
 the keys `date', `title', `amount' and `account'.  TRANSACTION
-may also contain a value for `effective' and `description'.  If
-`effective' is present, it is added as the effective date for the
+may also contain a value for `posted' and `description'.  If
+`posted' is present, it is added as the effective date for the
 entry and the entry is marked as cleared.  If `description' is
 present, it is added as a comment, preceded by \"Desc:\".  If
 `c2l-auto-cleared' is non-nil, the entry is always marked as
-cleared, even if there is no value for `effective' in
-TRANSACTION."
+cleared, even if there is no value for `posted' in TRANSACTION."
   (let-alist transaction
-    (concat .date (if .effective (format "=%s " .effective) "") (if (or .effective c2l-auto-cleared) " *" "") " " .title "\n"
+    (concat .date (if .posted (format "=%s " .posted) "") (if (or .posted c2l-auto-cleared) " *" "") " " .title "\n"
             (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
             (format "    %s\n" .account)
             (format "    %s  " c2l-base-account)
