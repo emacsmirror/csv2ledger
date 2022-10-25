@@ -163,7 +163,7 @@ used as the balancing account.
 
 This variable is normally given a value based on the matchers in
 `c2l-account-matchers-file', but you can also set in directly if
-you prefer to use regexes to match account.")
+you prefer to use regexes to match accounts.")
 
 (defcustom c2l-balancing-match-fields '(payee description)
   "List of fields used for determining the balancing account.
