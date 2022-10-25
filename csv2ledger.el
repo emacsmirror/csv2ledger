@@ -242,11 +242,16 @@ should contain values for `payee' and `sender'.  If the value of
 otherwise the payee is returned."
   (let ((payee (alist-get 'payee transaction))
         (sender (alist-get 'sender transaction)))
-    (if (stringp c2l-account-holder)
-        (if (string-match-p c2l-account-holder payee)
-            sender
-          payee)
-      payee)))
+    (cond
+     ((and (string-empty-p payee)
+           (string-empty-p sender))
+      "Unknown")
+     ((string-empty-p payee) sender)
+     ((string-empty-p sender) payee)
+     ((and (stringp c2l-account-holder)
+           (string-match-p c2l-account-holder payee))
+      sender)
+     (t payee))))
 
 (defun c2l-title-is-counterpart (transaction)
   "Return the counterpart of an entry.
