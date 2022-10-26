@@ -245,7 +245,7 @@ otherwise the payee is returned."
     (cond
      ((and (string-empty-p payee)
            (string-empty-p sender))
-      "Unknown")
+      "Unknown payee")
      ((string-empty-p payee) sender)
      ((string-empty-p sender) payee)
      ((and (stringp c2l-account-holder)
