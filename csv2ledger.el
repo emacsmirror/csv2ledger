@@ -260,7 +260,10 @@ TRANSACTION should be an alist containing field-value pairs and
 should contain a value for `counterpart', which is the return
 value.  If `counterpart' does not have a value, this function
 returns \"Unknown\"."
-  (alist-get 'counterpart transaction "Unknown"))
+  (let ((title (alist-get 'counterpart transaction "")))
+    (if (string-empty-p title)
+        "Unknown payee"
+      title)))
 
 (defun c2l-amount-is-amount (transaction)
   "Return the amount of an entry.
