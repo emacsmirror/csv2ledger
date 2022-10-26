@@ -240,8 +240,8 @@ TRANSACTION should be an alist containing field-value pairs and
 should contain values for `payee' and `sender'.  If the value of
 `c2l-account-holder' matches the payee, the sender is returned,
 otherwise the payee is returned."
-  (let ((payee (alist-get 'payee transaction))
-        (sender (alist-get 'sender transaction)))
+  (let ((payee (alist-get 'payee transaction ""))
+        (sender (alist-get 'sender transaction "")))
     (cond
      ((and (string-empty-p payee)
            (string-empty-p sender))
