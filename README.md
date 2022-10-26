@@ -60,7 +60,7 @@ Even though `csv2ledger` does not do anything with the `type` field by default, 
 
 ## Running the conversion ##
 
-With these options set up, it is possible to convert a CSV file. To do so, open the CSV file in Emacs and run `c2l-convert-buffer`. This command creates a new buffer named `*Csv2Ledger Results*` and puts all converted CSV transactions in it. If you do not wish to convert the entire buffer, you can also select a region and call `M-x c2l-convert-region` instead. Note that if there is already a buffer with the name `"Csv2Ledger Results"`, it is reused. That is, its contents is erased before the new entries are put in it.
+With these options set up, it is possible to convert a CSV file. To do so, open the CSV file in Emacs and run `c2l-convert-buffer`. This command creates a new buffer named `*Csv2Ledger Results*` and puts all converted CSV transactions in it. If you do not wish to convert the entire buffer, you can also select a region and call `M-x c2l-convert-region` instead. Note that if a buffer with the name `"Csv2Ledger Results"` already exists, it is reused. That is, its contents is erased before the new entries are put in it.
 
 There is also the command `c2l-csv-entry-as-kill`: this converts the single entry that point is on and places the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
 
@@ -84,7 +84,7 @@ The matchers are simple substrings, not regular expressions. I have not found th
  ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant"))
 ```
 
-`c2l-account-regexps` is not a customisable option, because normally the variable is set based on the contents of the account matchers file. If it is already set to a value the first time a conversion function is called, `csv2ledger` will not overwrite it.
+`c2l-account-regexps` is not a customisable option, because normally the variable is set based on the contents of the account matchers file. If it is already set to a value the first time a conversion function is called though, `csv2ledger` will not overwrite it.
 
 When `c2l-account-regexes` is compiled from the account matchers file, each account has only one entry in the alist, but this is not a requirement. You can have multiple regexes pointing to the same account. Note that if you have multiple regexes matching a transaction the first regex that matches wins out.
 
