@@ -6,60 +6,68 @@ An Emacs Lisp package for converting csv files to ledger-cli entries.
 
 The purpose of this small library is to read bank transactions in a CSV file and convert them to ledger entries. When properly configured, it can convert a CSV file automatically into a ledger file, taking a best guess at the target account to which transactions should be booked. When no target account can be deduced, a fallback account will be used, which you can change afterwards, or you can let Emacs show you each transaction and ask for a target account.
 
+`csv2ledger` creates ledger entries of the following form:
+
+```
+2022-20-17 Aldi Supermarket
+    ; Desc: Referenz 9999999XXX999 ALDI SAGT DANKE
+    Expenses:Groceries
+    Assets:Checkings                                         -€25.10
+```
+
+The description is optional, you can leave it out if you prefer. The format used for the amount is also configurable. By default, `csv2ledger` just copies the amount from the CSV file, but you can apply a conversion to it if you like.
+
+For ease of reference, I will use the following terms to refer to the various parts of the entry. The account associated with the bank account for the CSV file is called the *base* account. In the example here, it is `Assets:Checkings`. The other account, here `Expenses:Groceries`, is the *balancing account*, though I also refer to it as the *target account*. The real-life entity associated with the balancing account, here "Aldi Supermarket" is often called the payee, but since `csv2ledger` may also put the sender here, i.e., the person or organisation that initiated the transaction, I refer to it as the *title*.
+
+Not indicated in the above example is the *effective* date (also called *posted*). This is the date that may follow the booking date, separated by an equal sign:
+
+```
+2022-20-17=2022-20-19 * Aldi Supermarket
+    ; Desc: Referenz 9999999XXX999 ALDI SAGT DANKE
+    Expenses:Groceries
+    Assets:Checkings                                         -€25.10
+```
+
+If you have this information in your CSV file, you can use it and add it to the entry. If such an effective date is found, the entry is also marked as cleared, i.e., an asterisk appears between the date and the title.
+
+
 ## Setup ##
 
-Several user options must be configured before you can successfully use `csv2ledger`. Several other options can be configured to streamline the experience, but are not necessary.
-
-First, let's look at a typical ledger entry, just to get some terminology right:
+At the very least, you will need to set `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents your bank account in your ledger file.  By default, `c2l-base-account` is set to `Assets:Checking`. `c2l-csv-columns` is a list of column names representing the columns in your CSV file. The default value for this variable is the following:
 
 ```
-2022-20-17 * Aldi Supermarket
-    Expenses:Groceries
-    Assets:Checkings Account         -€25.10
+(date posted description sender payee amount)
 ```
 
-This could be a ledger entry created from a CSV file for the bank account that's behind the `Assets:Checkings Account` in this entry. I call this account the *base account*, just so that I can refer to it. The second account in this example, `Expenses:Groceries` is the *target* account, also mainly just to give it a name. Lastly, I label "Aldi Supermarket" the *title*. In the `ledger-cli` documentation, this is usually called the payee, but for transactions where I receive money, I'm the payee, but I don't put my own name there. Instead, I write the name of the person or organisation that pays me, so I prefer to use the term *title*.
+Note that the column names are symbols. In the default setup, all these fields appear in the Ledger entry, except for the fact that `sender` and `payee` never appear both. By default, `payee` is used as the title of the CSV file and `sender` is ignored. The CSV files that I receive from my bank, however, have my name in the payee field when I receive money. In such cases, I want the sender to appear as the title of the ledger entry.
 
-With that out of the way, let us look at the options that we need. First, you should set `c2l-base-account` to the ledger account that is associated with the bank account for which you are converting the CSV file. This can be done in two ways: You can either set a single, default base account, which will then apply to any CSV file you wish to convert, or you can set a buffer-local base account, which only applies to the CSV file in the current buffer.
+`csv2ledger` makes this happen if you set the option `c2l-account-holder` to a regular expression matching your name, or whatever your bank puts in the payee field in transactions where you receive money. If the payee matches this regular expression, the value of the `sender` field is used as the title.
 
-Setting a default base file can be done through Customize or in your `init.el` file. In the latter case, make sure to use `setq-default`, not `setq`, or use the `:custom` directive of `use-package`.
+If, on the other hand, you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title.
 
-Setting a buffer-local value for `c2l-base-account` can be done through file-local or directory-local variables, but also with the command `M-x c2l-set-base-account`. Regardless of the method you use, the buffer-local value will override any default value you may have set, so it is possible to set a default base account and override it on a per-buffer basis if the need arises.
+The default value of `c2l-csv-columns` assumes that the transaction amount always appears in the same column. This is not always the case, however: you may have separate columns for amount credit and amount debit. If this is the case, you can use the column names `credit` and `debit` instead of `amount`. If `csv2ledger` doesn't find and `amount` field in `c2l-csv-columns`, it assumes the `credit` and `debit` fields are present and uses those to construct the ledger entry. Basically, it checks which one of those fields contains something that looks like an amount and uses that value.
 
-The second option you should set is `c2l-csv-columns`. This defines the columns found in the CSV file. The default value for this variable is the following:
-
-```
-(date valuation description sender payee amount)
-```
-
-This means that the first column contains the date, the second the valuation, etc. You should change this list to whatever is correct for the CSV files you want to read. In order to create a proper ledger entry, your file should at least contain `date`, `sender`, `payee` and `amount`. The `valuation` and `description` fields are added to the entry if they exist, but if not, they are left out.
-
-If there are columns in your CSV files that you do not need for the ledger entry, you can write and underscore for them. For example, this is the setting that I use for my CSV files:
+If you have columns in your CSV files that you wish to ignore, use an underscore for them. For example, I'm not interested in the effective (posted) date, and my CSV files contain an additional final column with the balance, which `csv2ledger` doesn't use. Therefore, I set `c2l-csv-columns` to the following value:
 
 ```
 (setq c2l-csv-columns '(date _ type description sender payee amount _))
 ```
 
-I ignore the second field (which contains the valuation) and the last one, which contains the account balance. In addition to the standard fields there is also a `type` field, which does not become part of the ledger entry but which I use to determine the correct target account, as described below.
+One more thing to note here: I have a `type` field in this list. In my CSV files, this field indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. `csv2ledger` itself does not do anything with the `type` field, but it will happily extract the information in the column if you provide a name for it. Choose any name you like, just don't use a name that is meaningful to `csv2ledger`.
 
-These are the two options you must set in order to process any CSV files. There are a number of other options, however, which can make your life a bit easier if you configure them properly.
-
-The first of these is `c2l-account-holder`. This should be a string or regular expression that matches your name, whatever your bank puts in the CSV file when you receive money, i.e., when you are the payee. This is used by `csv2ledger` to determine what to use as the title of a transaction. If you are the payee, it uses the sender, otherwise it uses the payee.
-
-Second, you may also want to set `c2l-fallback-account`. This is the account used as the target account when `csv2ledger` cannot determine a target account. This can be, but does not have to be a true ledger account. You can set it to e.g., `"Expenses:TODO"`, so that after converting a CSV file you can go through the resulting ledger entries and search for the ones where you still need to provide a target account.
-
-If you do not set `c2l-fallback-account`, conversion of a CSV file will not be entirely automatic: each time `csv2ledger` cannot determine a target account itself (as described below), it will ask you for one. If you prefer this method of operation, leave `c2l-fallback-account` unset.
-
-The option `c2l-accounts-file` can be set to the path of a ledger file containing account declarations. Although `ledger-cli` does not require this, it is good style to define your accounts in a ledger file. Doing so and pointing `c2l-account-file` to it means that whenever `csv2ledger` asks you for an account, it offers your accounts for completion, which saves typing and ensures that you don't make typos in your account names..
-
-If you have set these options, you are basically good to go. `csv2ledger` will convert a CSV file to ledger entries without complaining. However, you will either have the same target account in each transaction, which is probably not what you want, or Emacs will ask you at every transaction which target account to use. To make this a bit less cumbersome, you can have Emacs try to recognise the target account automatically.
+Even though `csv2ledger` does not do anything with the `type` field by default, there are ways to make use of such extra information, as discussed below.
 
 
-## Automatic target account recognition ##
+## Running the conversion ##
 
-The automatic target account recognition in `csv2ledger` is admittedly fairly simple, but it works well for me. Essentially, it just checks for the presence of certain strings in an entry's fields. Each search string is associated with a ledger account. The first string that is found provides the target account.
+With these options set up, it is possible to convert a CSV file. To do so, open the CSV file in Emacs and run `c2l-convert-buffer`. This command creates a new buffer named `*Csv2Ledger Results*` and puts all converted CSV transactions in it. If you do not wish to convert the entire buffer, you can also select a region and call `M-x c2l-convert-region` instead. Note that if there is already a buffer with the name `"Csv2Ledger Results"`, it is reused. That is, its contents is erased before the new entries are put in it.
 
-To set this up, you first need to create a TSV (tab-separated values) file containing match strings and ledger accounts:
+There is also the command `c2l-csv-entry-as-kill`: this converts the single entry that point is on and places the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
+
+
+## Automatic account recognition ##
+
+In order to convert an entry, `csv2ledger` needs to know which account to use as the balancing account. By default, `csv2ledger` simply asks the user for each entry which account to use. To make `csv2ledger` recognise the balancing account automatically, you need to set up a file with account matchers. This file is a TSV (tab-separated values) file that matches strings to accounts:
 
 ```
 aldi          Expenses:Groceries
@@ -67,22 +75,27 @@ lidl          Expenses:Groceries
 restaurant    Expenses:Leisure:Restaurant
 ```
 
-The first column contains the match strings, the second column the ledger account. There can be multiple match strings associated with one account, as shown in the example. With this file set up, you should point the option `c2l-account-matchers-file` to it so that the matchers can be used to determine the target account.
+Set the option `c2l-account-matchers-file` to point to this file. With this setup, if the payee or description (or any other field you configure) of a transaction contains the string `"aldi"`, `Expenses:Groceries` is taken as the balancing account. There can be more than one matcher for one account: in the example, both `"aldi"` and `"lidl"` link to the account `Expenses:Groceries`.
 
-What happens is that Emacs looks at the data for a transaction and check if one of the matchers is present in it. This is simple substring matching: if the string `"lidl"` is in the transaction, the target account is set to Expenses:Groceries.
-
-By default, `csv2ledger` only checks the `payee` and `description` fields in the CSV file for matches, but this can be configured with the option `c2l-title-match-fields`. I personally set this option to the following value:
+The matchers are simple substrings, not regular expressions. I have not found the need to use regular expressions for account matching, and prefer the simplicity of not having to worry about the special meaning of certain characters in them. But if you prefer, you can use regular expressions for account matching. To do this, set the variable `c2l-account-regexps` to an alist mapping regular expressions to accounts:
 
 ```
-(setq c2l-title-match-fields '(description payee sender type))
+(("\\(?:aldi\\|lidl\\)" . "Expenses:Groceries")
+ ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant"))
 ```
 
-This means that the `description` field is checked first, then the `payee`, then the `sender` and lastly the `type` field. The `type` field is not part of the default setup, but it is listed in the CSV files I get from my bank and it indicates whether the transaction was a bank transfer, an ATM withdrawal, a card payment at a store, etc. I have a matcher that captures ATM withdrawals that sets the target account to `Assets:Cash`. 
+`c2l-account-regexps` is not a customisable option, because normally the variable is set based on the contents of the account matchers file. If it is already set to a value the first time a conversion function is called, `csv2ledger` will not overwrite it.
 
-Note that this is the *only* reason for including the `type` field in `c2l-csv-columns` above: I use its value to help determine the target account. As mentioned, the `type` field is not included in the ledger entry.
+When `c2l-account-regexes` is compiled from the account matchers file, each account has only one entry in the alist, but this is not a requirement. You can have multiple regexes pointing to the same account. Note that if you have multiple regexes matching a transaction the first regex that matches wins out.
+
+By default, only the `payee` and `description` fields are compared against the account matchers. This can be configured with the option `c2l-target-match-fields`. Its default value is `(payee description)`, but you can add other fields to it. In fact, I set it to the value `(description payee sender type)`.
+
+Two things are of note here: first, the order of this list determines the order in which the fields get checked. I prefer for the `description` field to be checked first, because it tends to contain more information than the `payee` field. Second, I added the `type` field to the list. `csv2ledger` does not do anything with this field, but I included it in the list of fields to extract from the CSV file and I use it here to match the target account. Specifically, I use it to capture ATM withdrawals and set the target account to `Assets:Cash`.
 
 
 ## Modifying field values ##
+
+TODO
 
 Depending on the format of your CSV file, it may also be necessary to set the variable `c2l-field-parse-functions`. This is a list mapping fields to functions that take the field's value and convert it to something else. For example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. `csv2ledger` comes with a function that performs this conversion, `c2l-convert-little-endian-to-iso8601-date`. I therefore set `c2l-field-parse-functions` like this:
 
@@ -120,9 +133,22 @@ By default, ledger entries are created uncleared. If you want to mark all transa
 A final variable you may want to set is `c2l-alignment-column`. This should most likely have the same value as `ledger-post-amount-alignment-column`, although `csv2ledger` currently assumes that `ledger-post-amount-alignment-at` is set to `:end` and that the commodity precedes the amount. If either is not true, alignment is probably not optimal.
 
 
-## Doing the conversion ##
 
-There are three commands to convert CSV transactions to ledger entries: `c2l-csv-entry-as-kill` converts the line point is on and puts the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing.
+-------------------------------------------------------------------------------
 
-The commands `c2l-convert-region` and `c2l-convert-buffer` convert the entries in the region or the entire buffer and put the results in a buffer called `*Csv2Ledger Results*`. Each time you call one of these conversion functions, the buffer is cleared, so make sure to save the ledger entries somewhere. You can also simply rename the buffer, Emacs will create a new buffer named `*Csv2Ledger Results*` if it doesn't find an existing one.
+c2l-accounts-file nil
+c2l-base-account "Assets:Unknown"
+c2l-fallback-account nil
+c2l-account-holder nil
+c2l-csv-columns '(date posted description sender payee amount)
+c2l-transaction-modify-function #'identity
+c2l-field-modify-functions nil
+c2l-title-function
+c2l-amount-function
+c2l-account-matchers-file nil
+c2l-target-match-fields '(payee description)
+c2l-auto-cleared nil
+c2l-alignment-column 52
 
+
+-------------------------------------------------------------------------------
