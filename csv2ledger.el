@@ -182,8 +182,8 @@ book the transaction."
   :type 'file
   :group 'csv2ledger)
 
-(defvar c2l-matcher-regexes nil
-  "Alist of matcher regexes and their acounts.
+(defvar c2l-matcher-regexps nil
+  "Alist of matcher regexps and their acounts.
 Each item should be a cons cell of a regular expression and an
 account name.  If the regular expression matches any of the
 fields in `c2l-target-match-fields', its corresponding account is
@@ -191,7 +191,7 @@ used as the target account.
 
 This variable is normally given a value based on the matchers in
 `c2l-account-matchers-file', but you can also set in directly if
-you prefer to use regexes to match accounts.")
+you prefer to use regexps to match accounts.")
 
 (defcustom c2l-target-match-fields '(payee description)
   "List of fields used for determining the target account.
@@ -345,7 +345,7 @@ See the documentation for the variable
             accounts))
       (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
 
-(defun c2l--compile-matcher-regexes (accounts)
+(defun c2l--compile-matcher-regexps (accounts)
   "Create efficient regular expressions for the matchers in ACCOUNTS.
 ACCOUNTS is a list of (<matcher> . <account>) conses, where
 <matcher> should be unique but <account> may occur multiple
@@ -359,14 +359,14 @@ for that account."
 
 (defun c2l--match-account (str)
   "Try to match STR to an account."
-  (unless c2l-matcher-regexes
-    (setq c2l-matcher-regexes
+  (unless c2l-matcher-regexps
+    (setq c2l-matcher-regexps
           (-> c2l-account-matchers-file
               (c2l--read-account-matchers)
-              (c2l--compile-matcher-regexes))))
+              (c2l--compile-matcher-regexps))))
   (--some (if (string-match-p (car it) str)
               (cdr it))
-          c2l-matcher-regexes))
+          c2l-matcher-regexps))
 
 (defun c2l--csv-line-to-ledger (row)
   "Convert ROW to a ledger entry.
