@@ -77,7 +77,7 @@ instead of the payee as the title of the entry."
   "Set the Csv2Ledger options dependent on `c2l-csv-columns'."
   (mapc #'custom-reevaluate-setting '(c2l-amount-function c2l-title-function)))
 
-(defcustom c2l-csv-columns '(date effective description sender payee amount)
+(defcustom c2l-csv-columns '(date posted description sender payee amount)
   "List of columns in the CSV file.
 The data in the CSV file is extracted based on this list.  The
 order of elements in the list should therefore represent the
