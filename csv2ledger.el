@@ -74,8 +74,9 @@ instead of the payee as the title of the entry."
   :group 'csv2ledger)
 
 (defun c2l-set-options ()
-  "Set the Csv2Ledger options dependent on `c2l-csv-columns'."
-  (mapc #'custom-reevaluate-setting '(c2l-amount-function c2l-title-function)))
+  "Set the Csv2Ledger options dependent on `c2l-csv-columns'.
+Currently, there is only one such option: `c2l-amount-function'."
+  (mapc #'custom-reevaluate-setting '(c2l-amount-function)))
 
 (defcustom c2l-csv-columns '(date posted description sender payee amount)
   "List of columns in the CSV file.
@@ -107,11 +108,10 @@ similarly, that it contains either an `amount' column or `credit'
 and `debit' columns.  You should set `c2l-title-function' and
 `c2l-amount-function' to match what is valid for your CSV files.
 
-The options `c2l-title-function' and `c2l-amount-function' are
-dependent on the value of this variable.  If you update this
-variable in your init file without using Customize, make sure to
-call `c2l-set-options' to set the dependent variables as well, or
-set them directly."
+The option `c2l-amount-function' is dependent on the value of
+this variable.  If you update this variable in your init file
+without using Customize, make sure to call `c2l-set-options' to
+set the dependent variable as well, or set it directly."
   :type '(repeat symbol)
   :initialize 'custom-initialize-default
   :set (lambda (symbol value)
@@ -140,17 +140,13 @@ for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
-(defcustom c2l-title-function
-  (if (memq 'counterpart c2l-csv-columns)
-      #'c2l-title-is-counterpart
-    #'c2l-title-is-payee-or-sender)
+(defcustom c2l-title-function #'c2l-title-is-payee-or-sender
   "Function to create a title.
 The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
 returned is used as the title of the ledger entry."
   :type 'function
-  :group 'csv2ledger
-  :set-after '(c2l-csv-columns))
+  :group 'csv2ledger)
 
 (defcustom c2l-amount-function
   (if (memq 'amount c2l-csv-columns)
@@ -252,18 +248,6 @@ otherwise the payee is returned."
            (string-match-p c2l-account-holder payee))
       sender)
      (t payee))))
-
-(defun c2l-title-is-counterpart (transaction)
-  "Return the counterpart of an entry.
-This function is for use as the value of `c2l-title-function'.
-TRANSACTION should be an alist containing field-value pairs and
-should contain a value for `counterpart', which is the return
-value.  If `counterpart' does not have a value, this function
-returns \"Unknown\"."
-  (let ((title (alist-get 'counterpart transaction "")))
-    (if (string-empty-p title)
-        "Unknown payee"
-      title)))
 
 (defun c2l-amount-is-amount (transaction)
   "Return the amount of an entry.
