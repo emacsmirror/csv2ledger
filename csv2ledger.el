@@ -475,6 +475,7 @@ beforehand if it already exists."
           (with-current-buffer buffer
             (insert entry "\n")))
         (forward-line 1)))
+    (display-buffer buffer)
     (message "[Csv2Ledger] Converted %d entries." n)))
 
 ;;;###autoload
