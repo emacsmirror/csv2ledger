@@ -95,12 +95,16 @@ Two things are of note here: first, the order of this list determines the order 
 
 ## Modifying field values ##
 
-TODO
+If you wish or need to modify the values extracted from the CSV file in some way, there are several user options that allow you to do so.
 
-Depending on the format of your CSV file, it may also be necessary to set the variable `c2l-field-parse-functions`. This is a list mapping fields to functions that take the field's value and convert it to something else. For example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. `csv2ledger` comes with a function that performs this conversion, `c2l-convert-little-endian-to-iso8601-date`. I therefore set `c2l-field-parse-functions` like this:
+First, there is the option `c2l-field-modify-functions`. This is an alist mapping field names to functions. Each function should take a string as its only argument and return a string. These functions are called with the field's value as argument and the return value is used to construct the entry.
+
+As an example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. To remedy this, `csv2ledger` comes with the function `c2l-convert-little-endian-to-iso8601-date` that takes a date in the format `DD.MM.YYYY` and converts it to `YYYY-MM-DD`. For convenience, it also accepts dates in the forms `DD-MM-YYYY` and `DD/MM/YYYY`.
+
+To use this function to modify the `date` field, I set `c2l-field-parse-functions` like this:
 
 ```
-(setq c2l-field-parse-functions
+(setq c2l-field-modify-functions
       '((date . c2l-convert-little-endian-to-iso8601-date)))
 ```
 
@@ -120,15 +124,35 @@ to \"-€3150.20\"."
     (concat sign "€" euros "." cents)))
 ```
 
-You can then add this to `c2l-field-parse-functions`:
+The setting for `c2l-field-parse-functions` then ends up like this:
 
 ```
-(setq c2l-field-parse-functions
+(setq c2l-field-modify-functions
       '((date . c2l-convert-little-endian-to-iso8601-date)
         (amount . c2l-convert-postbank-to-ledger-amount)))
 ```
 
-By default, ledger entries are created uncleared. If you want to mark all transactions as cleared, set the variable `c2l-auto-cleared`.
+One potential disadvantage of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of the other fields in the transaction. If you need to make such a change to the transaction, you can set the option `c2l-transaction-modify-function` to a function that takes the entire transaction as its argument and returns a modified transaction.
+
+The transaction will be passed as an alist of field-value pairs. For example, for the ledger entry shown above, the transaction would be something like this:
+
+```
+((date . "17.20.2022")
+ (description . "Referenz 9999999XXX999 ALDI SAGT DANKE")
+ (sender . "account holder")
+ (payee . "Aldi Supermarket")
+ (amount . "-25,10 €"))
+
+```
+
+Your function can make any change to the transaction you wish. The only requirement is that the modified transaction contains at least the fields `date`, `payee` and either `amount` or `debit` and `credit`,  because `csv2ledger` needs them to construct the ledger entry.
+
+Note that in this transaction alist, the values for date and amount have not been modified by the functions if `c2l-field-modify-functions`. This is because `c2l-transaction-modify-function` is called first. The result of that function is passed to the functions in `c2l-field-modify-functions`. In principle, `c2l-transaction-modify-function` can do anything `c2l-field-modify-functions` can do, but the latter type  of function is conceptually simpler, which is why it's included here.
+
+You may also notice that the transaction alist does not contain a value for `title`. The `title` field is added to the transaction alist after the functions in `c2l-field-modify-functions` have been applied.
+
+TODO
+
 
 A final variable you may want to set is `c2l-alignment-column`. This should most likely have the same value as `ledger-post-amount-alignment-column`, although `csv2ledger` currently assumes that `ledger-post-amount-alignment-at` is set to `:end` and that the commodity precedes the amount. If either is not true, alignment is probably not optimal.
 
