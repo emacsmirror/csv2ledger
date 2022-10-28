@@ -140,7 +140,7 @@ for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
-(defcustom c2l-title-function #'c2l-title-is-payee-or-sender
+(defcustom c2l-title-function #'c2l-payee-or-sender
   "Function to create a title.
 The function should take as argument an entry alist of
 field-value pairs and should return a string.  The string
@@ -237,7 +237,7 @@ format, it just splits DATE on the separator, reverses the date
 parts and joins them again, using a hyphen as separator."
   (string-join (nreverse (split-string date "[./-]" t "[[:space:]]")) "-"))
 
-(defun c2l-title-is-payee-or-sender (transaction)
+(defun c2l-payee-or-sender (transaction)
   "Return payee or sender based on `c2l-account-holder'.
 This function is for use as the value of `c2l-title-function'.
 TRANSACTION should be an alist containing field-value pairs and
