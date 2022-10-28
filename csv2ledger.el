@@ -7,7 +7,7 @@
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
 ;; Version: 1.0
-;; Package-Requires: ((emacs "28.1") (parse-csv) (dash "2.19.1"))
+;; Package-Requires: ((emacs "28.1") (csv-mode) (parse-csv) (dash "2.19.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
