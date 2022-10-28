@@ -264,7 +264,10 @@ TRANSACTION should be an alist containing field-value pairs and
 should contain a value for `amount', which is the return value.
 If `amount' does not contain a value, this function returns
 \"0.00\"."
-  (alist-get 'amount transaction "0.00"))
+  (let ((amount (alist-get 'amount transaction)))
+    (if (c2l--amount-p amount)
+        amount
+      "0.00")))
 
 (defun c2l-amount-is-credit-or-debit (transaction)
   "Return the amount of an entry.
