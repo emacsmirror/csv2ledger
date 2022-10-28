@@ -160,6 +160,14 @@ returned is used as the amount of the ledger entry."
   :group 'csv2ledger
   :set-after '(c2l-csv-columns))
 
+(defcustom c2l-entry-function #'c2l-compose-entry
+  "Function to create a ledger entry.
+This should be a function that takes an alist of field-value
+pairs and returns a string.  The string should be a formatted
+Ledger entry."
+  :type 'function
+  :group 'csv2ledger)
+
 (defcustom c2l-account-matchers-file nil
   "File containing matcher strings mapped to accounts.
 This should be a TSV (tab-separated values) file containing one
@@ -280,7 +288,7 @@ make sure to add one using `c2l-field-parse-functions'."
   "Return non-nil is STR is likely to be an amount."
   (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}" str))
 
-(defun c2l--compose-entry (transaction)
+(defun c2l-compose-entry (transaction)
   "Create a ledger entry.
 TRANSACTION is an alist containing (key . value) pairs that will
 be included in the entry.  It should at least contain values for
@@ -392,7 +400,7 @@ already, present, its value is updated."
     (if (assq 'amount modified-fields)
         (setf (alist-get 'amount modified-fields) amount)
       (push (cons 'amount amount) modified-fields))
-    (c2l--compose-entry modified-fields)))
+    (funcall c2l-entry-function modified-fields)))
 
 (defun c2l--get-current-row ()
   "Read the current line as a CSV row.
