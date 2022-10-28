@@ -97,6 +97,8 @@ Two things are of note here: first, the order of this list determines the order 
 
 If you wish or need to modify the values extracted from the CSV file in some way, there are several user options that allow you to do so.
 
+### Modifying individual fields ###
+
 First, there is the option `c2l-field-modify-functions`. This is an alist mapping field names to functions. Each function should take a string as its only argument and return a string. These functions are called with the field's value as argument and the return value is used to construct the entry.
 
 As an example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. To remedy this, `csv2ledger` comes with the function `c2l-convert-little-endian-to-iso8601-date` that takes a date in the format `DD.MM.YYYY` and converts it to `YYYY-MM-DD`. For convenience, it also accepts dates in the forms `DD-MM-YYYY` and `DD/MM/YYYY`.
@@ -132,6 +134,8 @@ The setting for `c2l-field-parse-functions` then ends up like this:
         (amount . c2l-convert-postbank-to-ledger-amount)))
 ```
 
+### Modifying the transaction ###
+
 One potential disadvantage of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of the other fields in the transaction. If you need to make such a change to the transaction, you can set the option `c2l-transaction-modify-function` to a function that takes the entire transaction as its argument and returns a modified transaction.
 
 The transaction will be passed as an alist of field-value pairs. For example, for the ledger entry shown above, the transaction would be something like this:
@@ -149,7 +153,17 @@ Your function can make any change to the transaction you wish. The only requirem
 
 Note that in this transaction alist, the values for date and amount have not been modified by the functions if `c2l-field-modify-functions`. This is because `c2l-transaction-modify-function` is called first. The result of that function is passed to the functions in `c2l-field-modify-functions`. In principle, `c2l-transaction-modify-function` can do anything `c2l-field-modify-functions` can do, but the latter type  of function is conceptually simpler, which is why it's included here.
 
-You may also notice that the transaction alist does not contain a value for `title`. The `title` field is added to the transaction alist after the functions in `c2l-field-modify-functions` have been applied.
+
+### Setting the title ###
+
+You may also notice that the transaction alist does not contain a value for `title`. The `title` field is added to the transaction alist after the functions in `c2l-field-modify-functions` have been applied. The function that creates the title is configurable through the option `c2l-title-function.` Its default value is `c2l-payee-or-sender`, which returns the sender if the payee matches the value of `c2l-account-holder` and the payee otherwise. It makes sure to check that it does not return an empty string, however, so if either payee or sender is empty, the other field's value is returned, and if both are empty, it returns the string `"Unknown payee"`.
+
+`c2l-title-function` should be set to a function that takes a transaction as an alist and returns the title of the transaction as a string. This means that if you want to use something other than the payee or the sender as the title, e.g., the description field, you can. Just write a short function that extracts the relevant value from the transaction and returns it.
+
+
+### Setting the amount ###
+
+As already mentioned above, a CSV file may contain the amount of a transaction in a single column, or it may use separate columns for amounts debit and amounts credit.
 
 TODO
 
