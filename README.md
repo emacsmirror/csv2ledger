@@ -163,7 +163,18 @@ You may also notice that the transaction alist does not contain a value for `tit
 
 ### Setting the amount ###
 
-As already mentioned above, a CSV file may contain the amount of a transaction in a single column, or it may use separate columns for amounts debit and amounts credit.
+As already mentioned above, a CSV file may contain the amount of a transaction in a single column, or it may use separate columns for amounts debit and amounts credit. The function that creates the actual ledger entry requires the `amount` field to be present, however. Therefore, if there is no `amount` field in `c2l-csv-columns`, `csv2ledger` assumes that `credit` and `debit` are present. It does this by setting the variable `c2l-amount-function`. This variable is similar to `c2l-title-function`: it is passed the transaction as an alist and it returns the amount as a string. If the `account` field is present in `c2l-csv-columns`, this variable is set to the function `c2l-amount-is-amount`, which simply extracts the value of the `amount` field and returns it. If the `amount` field is not present in `c2l-csv-columns`, `c2l-amount-function` is set to `c2l-amount-is-credit-or-debit`, which checks the values for `credit` and `debit` and returns whichever looks like an amount (using the function `c2l--amount-p`).
+
+The variable `c2l-amount-function` is actually a user option, which means that you can set it to a user-defined function if you like, which may be useful if your CSV file is structured in some strange way that I haven't envisaged.
+
+One point to keep in mind: the amount in the debit field must be a negative amount, i.e., it must have a minus sign. If this is not the case, the easiest way to change this is in `c2l-field-modify-functions`, though in principle `c2l-transaction-modify-function` and `c2l-amount-function` could be used as well.
+
+
+### Creating the entry ###
+
+After all modification functions have been called, the resulting transaction is passed to the function in `c2l-entry-function` . The default value of this option is the function `c2l-compose-entry`, which creates entries in the form shown above. If that format does not suit your needs, you can use a custom function instead. It should take the transaction as an alist and return a string that can be inserted into a ledger buffer.
+
+
 
 TODO
 
