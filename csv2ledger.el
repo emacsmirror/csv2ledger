@@ -73,11 +73,6 @@ instead of the payee as the title of the entry."
   :type 'string
   :group 'csv2ledger)
 
-(defun c2l-set-options ()
-  "Set the Csv2Ledger options dependent on `c2l-csv-columns'.
-Currently, there is only one such option: `c2l-amount-function'."
-  (mapc #'custom-reevaluate-setting '(c2l-amount-function)))
-
 (defcustom c2l-csv-columns '(date posted description sender payee amount)
   "List of columns in the CSV file.
 The data in the CSV file is extracted based on this list.  The
@@ -98,36 +93,38 @@ Valid column names are the following:
 
 Other column names can be added, but they cannot be used directly
 in the transaction.  They may be used in the option
-`c2l-target-match-fields' or in custom functions for the options
-`c2l-title-function' and `c2l-amount-function', however.
-
-It is assumed that a CSV file contains either `payee' and
-`sender' columns or a `counterpart' column, but not both, and
-similarly, that it contains either an `amount' column or `credit'
-and `debit' columns.  You should set `c2l-title-function' and
-`c2l-amount-function' to match what is valid for your CSV files.
-
-The option `c2l-amount-function' is dependent on the value of
-this variable.  If you update this variable in your init file
-without using Customize, make sure to call `c2l-set-options' to
-set the dependent variable as well, or set it directly."
+`c2l-target-match-fields' or in custom functions for
+`c2l-transaction-modify-functions', however."
   :type '(repeat symbol)
-  :initialize 'custom-initialize-default
-  :set (lambda (symbol value)
-         (unless (equal value (eval symbol))
-           (custom-set-default symbol value)
-           (c2l-set-options)))
   :group 'csv2ledger)
 
-(defcustom c2l-transaction-modify-function #'identity
-  "Function to modify a transaction.
-This should be a single function that takes an alist representing
-a transaction and returns a modified alist.  Any kind of
-modification is possible, including modifying, adding or deleting
-fields.  Importantly, because the function is passed the entire
-entry, it is possible to modify or create a field based on the
-values of other fields."
-  :type 'function
+(defvar c2l-transaction-modifier nil
+  "The function that modifies a CSV transaction before creating a ledger entry.
+This is the composite function created with the functions in
+`c2l-transaction-modify-functions'.")
+
+(defun c2l-compose-transaction-modifier (fns)
+  "Function to set the variable `c2l-transaction-modifier'.
+FNS is a list of functions, which is reversed and then composed
+into a single function taking a transaction alist as argument and
+returning a modified transaction alist."
+  (setq c2l-transaction-modifier (apply #'-compose (reverse fns))))
+
+(defcustom c2l-transaction-modify-functions '(c2l-create-title c2l-create-amount c2l-create-account)
+  "List of functions applied to the transaction before creating an entry.
+The functions are applied in the order in which they appear in
+the list.  Each function should take an alist representing a
+transaction as argument and should return the modified
+transaction.
+
+These functions are composed into a single function which is then
+stored in the variable `c2l-transaction-modifier'.  If you set
+this variable outside of Customize, make sure to call the
+function `c2l-set-transaction-modifier ' as well."
+  :type '(repeat function)
+  :set (lambda (var val)
+         (c2l-compose-transaction-modifier val)
+         (set-default var val))
   :group 'csv2ledger)
 
 (defcustom c2l-field-modify-functions nil
@@ -138,26 +135,6 @@ argument and should return a string, which will be the value used
 for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
-
-(defcustom c2l-title-function #'c2l-payee-or-sender
-  "Function to create a title.
-The function should take as argument an entry alist of
-field-value pairs and should return a string.  The string
-returned is used as the title of the ledger entry."
-  :type 'function
-  :group 'csv2ledger)
-
-(defcustom c2l-amount-function
-  (if (memq 'amount c2l-csv-columns)
-      #'c2l-amount-is-amount
-    #'c2l-amount-is-credit-or-debit)
-  "Function to create the amount.
-The function should take as argument an entry alist of
-field-value pairs and should return a string.  The string
-returned is used as the amount of the ledger entry."
-  :type 'function
-  :group 'csv2ledger
-  :set-after '(c2l-csv-columns))
 
 (defcustom c2l-entry-function #'c2l-compose-entry
   "Function to create a ledger entry.
@@ -236,53 +213,47 @@ format, it just splits DATE on the separator, reverses the date
 parts and joins them again, using a hyphen as separator."
   (string-join (nreverse (split-string date "[./-]" t "[[:space:]]")) "-"))
 
-(defun c2l-payee-or-sender (transaction)
-  "Return payee or sender based on `c2l-account-holder'.
-This function is for use as the value of `c2l-title-function'.
-TRANSACTION should be an alist containing field-value pairs and
-should contain values for `payee' and `sender'.  If the value of
-`c2l-account-holder' matches the payee, the sender is returned,
-otherwise the payee is returned."
-  (let ((payee (alist-get 'payee transaction ""))
-        (sender (alist-get 'sender transaction "")))
-    (cond
-     ((and (string-empty-p payee)
-           (string-empty-p sender))
-      "Unknown payee")
-     ((string-empty-p payee) sender)
-     ((string-empty-p sender) payee)
-     ((and (stringp c2l-account-holder)
-           (string-match-p c2l-account-holder payee))
-      sender)
-     (t payee))))
+(defun c2l-create-title (transaction)
+  "Create a title for TRANSACTION.
+Return the modified transaction."
+  (let* ((payee (alist-get 'payee transaction ""))
+         (sender (alist-get 'sender transaction ""))
+         (title (cond
+                 ((and (string-empty-p payee)
+                       (string-empty-p sender))
+                  "Unknown payee")
+                 ((string-empty-p payee) sender)
+                 ((string-empty-p sender) payee)
+                 ((and (stringp c2l-account-holder)
+                       (string-match-p c2l-account-holder payee))
+                  sender)
+                 (t payee))))
+    (push (cons 'title title) transaction)
+    transaction))
 
-(defun c2l-amount-is-amount (transaction)
-  "Return the amount of an entry.
-This function is for use as the value of `c2l-amount-function'.
-TRANSACTION should be an alist containing field-value pairs and
-should contain a value for `amount', which is the return value.
-If `amount' does not contain a value, this function returns
-\"0.00\"."
-  (let ((amount (alist-get 'amount transaction)))
-    (if (c2l--amount-p amount)
-        amount
-      "0.00")))
+(defun c2l-create-amount (transaction)
+  "Create the amountfor TRANSACTION.
+Return the modified transaction."
+  (unless (c2l--amount-p (alist-get 'amount transaction ""))
+    (let ((amount (or (c2l--amount-p (alist-get  'credit transaction ""))
+                      (c2l--amount-p (alist-get  'debit transaction ""))
+                      "0.00")))
+      (if (alist-get 'amount transaction)
+          (setf (alist-get 'amount transaction) amount)
+        (push (cons 'amount amount) transaction))))
+  transaction)
 
-(defun c2l-amount-is-credit-or-debit (transaction)
-  "Return the amount of an entry.
-This function is for use as the value of `c2l-amount-function'.
-TRANSACTION should be an alist containing field-value pairs and
-should contain values for `credit' and `debit'.  Whichever of
-these two looks like an amount (using `c2l--amount-p') is
-returned.  If neither contains an amount, the value \"0.00\" is
-returned.
-
-Note that a debit amount should have a negative value, i.e., it
-should be preceded by a minus sign.  If this is not the case,
-make sure to add one using `c2l-field-parse-functions'."
-  (or (c2l--amount-p (alist-get 'credit transaction ""))
-      (c2l--amount-p (alist-get 'debit transaction ""))
-      "0.00"))
+(defun c2l-create-account (transaction)
+  "Create the account for TRANSACTION."
+  (let ((account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-target-match-fields) transaction)))
+                     c2l-fallback-account
+                     (completing-read (format "Account for transaction %s, %s «%.75s» "
+                                              (alist-get 'title transaction "Unknown payee")
+                                              (alist-get 'amount transaction "0.00")
+                                              (alist-get 'description transaction "?"))
+                                      c2l--accounts))))
+    (push (cons 'account account) transaction)
+    transaction))
 
 ;;; Helper functions
 
@@ -377,33 +348,19 @@ found, the value of `c2l-fallback-account' is used.  If that
 option is unset, the user is asked for an account.
 
 This function first creates an alist of field-value pairs,
-passes it to `c2l-transaction-modify-function' and subsequently
 applies the functions in `c2l-field-modify-functions' to the
-individual fields.  After that, the `title' and `account' fields
-are added.  Additionally, the `amount' field is added or, if
-already, present, its value is updated."
-  (let* ((fields (funcall c2l-transaction-modify-function (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
+individual fields and then passes the transaction through
+`c2l-transaction-modify-functions' before calling
+`c2l-entry-function' to create the actual entry."
+  (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
          (modified-fields (mapcar (lambda (item)
                                     (let ((field (car item))
                                           (value (cdr item)))
                                       (cons field
                                             (funcall (alist-get field c2l-field-modify-functions #'identity) value))))
                                   fields))
-         (title (funcall c2l-title-function modified-fields))
-         (amount (funcall c2l-amount-function modified-fields))
-         (account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-target-match-fields) modified-fields)))
-                      c2l-fallback-account
-                      (completing-read (format "Account for transaction %s, %s «%.75s» "
-                                               (funcall c2l-title-function modified-fields)
-                                               (alist-get 'amount modified-fields)
-                                               (alist-get 'description modified-fields))
-                                       c2l--accounts))))
-    (push (cons 'account account) modified-fields)
-    (push (cons 'title title) modified-fields)
-    (if (assq 'amount modified-fields)
-        (setf (alist-get 'amount modified-fields) amount)
-      (push (cons 'amount amount) modified-fields))
-    (funcall c2l-entry-function modified-fields)))
+         (transaction (funcall c2l-transaction-modifier modified-fields)))
+    (funcall c2l-entry-function transaction)))
 
 (defun c2l--get-current-row ()
   "Read the current line as a CSV row.
