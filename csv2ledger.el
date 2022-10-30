@@ -119,8 +119,8 @@ transaction.
 
 These functions are composed into a single function which is then
 stored in the variable `c2l-transaction-modifier'.  If you set
-this variable outside of Customize, make sure to call the
-function `c2l-set-transaction-modifier ' as well."
+this option outside of Customize, make sure to call the function
+`c2l-set-transaction-modifier ' as well."
   :type '(repeat function)
   :set (lambda (var val)
          (c2l-compose-transaction-modifier val)
