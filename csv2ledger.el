@@ -92,7 +92,6 @@ Valid column names are the following:
 - `description': whatever the bank provides
 - `sender': the initiator of the payment
 - `payee': the party receiving the payment
-- `counterpart': the other party in the transaction
 - `amount': the amount of the payment (positive or negative)
 - `credit': the amount received
 - `debit': the amount payed
