@@ -337,38 +337,40 @@ for that account."
               (cdr it))
           c2l-matcher-regexps))
 
-(defun c2l--csv-line-to-ledger (row)
-  "Convert ROW to a ledger entry.
-ROW contains the data of the entry as a list of strings.  The
-strings are interpreted according to the template in
-`c2l-csv-columns'.  The transaction is booked to the account in
-`c2l-base-account'.  The target account is determined on the
-basis of the matchers in `c2l-account-matchers-file'.  If none is
-found, the value of `c2l-fallback-account' is used.  If that
-option is unset, the user is asked for an account.
+(defun c2l--csv-line-to-ledger (transaction)
+  "Convert TRANSACTION to a ledger entry.
+TRANSACTION is an alist containing the data of the transaction.
+The transaction is booked to the account in `c2l-base-account'.
+The target account is determined on the basis of the matchers in
+`c2l-account-matchers-file'.  If none is found, the value of
+`c2l-fallback-account' is used.  If that option is unset, the
+user is asked for an account.
 
-This function first creates an alist of field-value pairs,
-applies the functions in `c2l-field-modify-functions' to the
-individual fields and then passes the transaction through
+This function first applies the functions in
+`c2l-field-modify-functions' to the individual fields of
+TRANSACTION and then passes the transaction through
 `c2l-transaction-modify-functions' before calling
 `c2l-entry-function' to create the actual entry."
-  (let* ((fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
-         (modified-fields (mapcar (lambda (item)
+  (let* ((modified-fields (mapcar (lambda (item)
                                     (let ((field (car item))
                                           (value (cdr item)))
                                       (cons field
                                             (funcall (alist-get field c2l-field-modify-functions #'identity) value))))
-                                  fields))
-         (transaction (funcall c2l-transaction-modifier modified-fields)))
-    (funcall c2l-entry-function transaction)))
+                                  transaction))
+         (modified-transaction (funcall c2l-transaction-modifier modified-fields)))
+    (funcall c2l-entry-function modified-transaction)))
 
 (defun c2l--get-current-row ()
   "Read the current line as a CSV row.
-Return value is a list of values as strings."
-  (let ((separator (car csv-separator-chars))
-        (quote-char (string-to-char (or (car csv-field-quotes) "")))
-        (line (buffer-substring-no-properties (point-at-bol) (point-at-eol))))
-    (parse-csv-string line separator quote-char)))
+Return value is an alist of field-value pairs, where the field
+names are taken from `c2l-csv-columns'."
+  (if c2l-csv-columns
+      (let* ((separator (car csv-separator-chars))
+             (quote-char (string-to-char (or (car csv-field-quotes) "")))
+             (line (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
+             (row (parse-csv-string line separator quote-char)))
+        (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
+    (user-error "Cannot interpret CSV data; set `c2l-csv-columns' first")))
 
 (defun c2l--has-header ()
   "Return non-nil if the current CSV buffer appears to have a header.
@@ -377,11 +379,10 @@ Essentially, this function just checks the fields `amount',
 contains something that looks like a amount."
   (save-mark-and-excursion
     (goto-char (point-min))
-    (let* ((row (c2l--get-current-row))
-           (fields (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row))))
-      (not (or (c2l--amount-p (alist-get 'amount fields ""))
-               (c2l--amount-p (alist-get 'credit fields ""))
-               (c2l--amount-p (alist-get 'debit fields "")))))))
+    (let* ((transaction (c2l--get-current-row)))
+      (not (or (c2l--amount-p (alist-get 'amount transaction ""))
+               (c2l--amount-p (alist-get 'credit transaction ""))
+               (c2l--amount-p (alist-get 'debit transaction "")))))))
 
 (defun c2l--get-results-buffer ()
   "Create a results buffer for conversion.
