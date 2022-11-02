@@ -33,7 +33,7 @@ If you have this information in your CSV file, you can use it and add it to the 
 
 ## Setup ##
 
-At the very least, you will need to set two user options: `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents your bank account in your ledger file.  By default, `c2l-base-account` is set to `Assets:Checking`. `c2l-csv-columns` is a list of column names representing the columns in your CSV file. The following column names are meaningful to `csv2ledger:`
+At the very least, you will need to set two user options: `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents your bank account in your ledger file.  By default, it is set to `Assets:Checking`. `c2l-csv-columns` is a list of column names representing the columns in your CSV file. The following column names are meaningful to `csv2ledger:`
 
 - `date`: booking date of the transaction
 - `posted`: effective date of the transaction
@@ -52,13 +52,13 @@ The `amount` field is indented for the CSV field that contains the amount of the
 
 The `description` and `posted` fields are entirely optional. If you have them and wish to include them in the ledger entry, add them to `c2l-csv-columns`. If you do not wish them included in the ledger entries, leave them out.
 
-Note that `c2l-csv-columns` should contain a column name for each column in your CSV files. If there are columns that you wish to ignore, use an underscore for them. For example, the CSV files from my bank have an effective (posted) date in them as the second element, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also an additional final column with the balance, which `csv2ledger` doesn't use. Therefore, I set `c2l-csv-columns` to the following value:
+Note that `c2l-csv-columns` should contain a column name for each column in your CSV files. If there are columns that you wish to ignore, use an underscore for them. For example, the CSV files from my bank have an effective (posted) date in them as the second element, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the balance, which `csv2ledger` doesn't use. Therefore, I set `c2l-csv-columns` to the following value:
 
 ```emacs-lisp
 (setq c2l-csv-columns '(date _ type description sender payee amount _))
 ```
 
-One more thing to note here: I have a `type` field in this list. In my CSV files, this field indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. By default, `csv2ledger` itself does not do anything with the `type` field, but with some additional configuration, you can make use of such extra information in several ways, as discussed below.
+Note that I have a `type` field in this list. In my CSV files, this field indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. By default, `csv2ledger` itself does not do anything with the `type` field, but with some additional configuration, you can make use of such extra information in several ways, as discussed below.
 
 
 ## Running the conversion ##
@@ -166,7 +166,6 @@ The transaction will be passed as an alist of field-value pairs. For example, fo
  (sender . "account holder")
  (payee . "Aldi Supermarket")
  (amount . "-€25.10"))
-
 ```
 
 Note that the functions in `c2l-field-modify-functions` are applied before `c2l-transaction-modify-functions`, which is why the values for `date` and `amount` already appear in their modified forms here.
