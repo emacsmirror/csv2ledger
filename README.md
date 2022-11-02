@@ -188,14 +188,14 @@ The particular function that takes care of this is `c2l-create-title` and it is 
 
 The second function in `c2l-transaction-modify-functions` is a function to create the amount, imaginatively called `c2l-create-amount`. This function does not do anything if there is an `amount` field in the transaction and its value looks like an amount. If this is not the case, it checks if there is a `credit` or `debit` field and sees if either of those have a value that looks like an amount. If either of them exists and has an amount, it is added to the transaction as the `amount` field.
 
-If you need to replace this function with a custom function, note that it is important that it creates an `amount` field in the transaction and that its value is an amount, because that is what is eventually used to construct the entry. If a transaction does not have an `amount` field after the functions in `c2l-transaction-modify-functions` have been applied, the ledger entry will lack an amount and will be invalid.
+If you need to replace this function with a custom function, note that it is important that it creates an `amount` field in the transaction, because that is what is eventually used to construct the entry. If a transaction does not have an `amount` field after the functions in `c2l-transaction-modify-functions` have been applied, the ledger entry will lack an amount and will be invalid.
 
 Another important point to note is that the amount in the `amount` field must be a negative amount if it's an amount debit, i.e., it must have a minus sign. If you have a separate `debit` column in your CSV files with amounts that are not negative, make sure to add a minus sign. The easiest way to do this is in `c2l-field-modify-functions`.
 
 
 ### Setting the account (v. 2) ###
 
-The third function in `c2l-transaction-modify-functions`is `c2l-create-account`. This is the function that checks the fields of the transaction against the account matchers, and if one is not found, uses `c2l-fallback-account` or asks the user. If you wish to use a different method to set the account, you can replace this function with a custom one. It needs to add an `account` field to the transaction, but there are no restrictions on how the account is determined.
+The third function in `c2l-transaction-modify-functions` is `c2l-create-account`. This is the function that checks the fields of the transaction against the account matchers, and if one is not found, uses `c2l-fallback-account` or asks the user. If you wish to use a different method to set the account, you can replace this function with a custom one. It needs to add an `account` field to the transaction, but there are no restrictions on how the account is determined.
 
 
 ### Creating the entry ###
