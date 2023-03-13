@@ -405,7 +405,7 @@ names are taken from `c2l-csv-columns'."
   (if c2l-csv-columns
       (let* ((separator (car csv-separator-chars))
              (quote-char (string-to-char (or (car csv-field-quotes) "")))
-             (line (buffer-substring-no-properties (point-at-bol) (point-at-eol)))
+             (line (buffer-substring-no-properties (pos-bol) (pos-eol)))
              (row (parse-csv-string line separator quote-char)))
         (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
     (user-error "Cannot interpret CSV data; set `c2l-csv-columns' first")))
