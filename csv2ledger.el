@@ -283,7 +283,10 @@ Return the modified transaction."
 
 (defun c2l-create-account (transaction)
   "Create the account for TRANSACTION."
-  (let ((account (or (-some #'c2l--match-account (mapcar #'cdr (--filter (memq (car it) c2l-target-match-fields) transaction)))
+  (let ((account (or (-some #'c2l--match-account
+                            (mapcar #'cdr
+                                    (--filter (memq (car it) c2l-target-match-fields)
+                                              transaction)))
                      c2l-fallback-account
                      (completing-read (format "Account for transaction %s, %s «%.75s» "
                                               (alist-get 'title transaction "Unknown payee")
