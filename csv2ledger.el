@@ -270,7 +270,7 @@ Return the modified transaction."
     transaction))
 
 (defun c2l-create-amount (transaction)
-  "Create the amountfor TRANSACTION.
+  "Create the amount for TRANSACTION.
 Return the modified transaction."
   (unless (c2l--amount-p (alist-get 'amount transaction ""))
     (let ((amount (or (c2l--amount-p (alist-get  'credit transaction ""))
