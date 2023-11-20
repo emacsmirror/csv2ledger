@@ -1,6 +1,6 @@
 ;;; csv2ledger.el --- Convert csv files to ledger entries  -*- lexical-binding: t -*-
 
-;; Copyright (c) 2022 Joost Kremers
+;; Copyright (c) 2023 Joost Kremers
 ;; All rights reserved.
 
 ;; Author: Joost Kremers <joostkremers@fastmail.fm>
