@@ -31,6 +31,15 @@ Not indicated in the above example is the *effective* date (also called *posted*
 If you have this information in your CSV file, you can use it and add it to the entry. If such an effective date is found, the entry is also marked as cleared, i.e., an asterisk appears between the date and the title.
 
 
+## Installation ##
+
+For the moment, `csv2ledger` needs to be installed manually. Put the file `csv2ledger.el` in your load path, byte-compile it if you wish, and `require` it in your init file.
+
+Make sure to install the dependencies as well: `csv-mode` from GNU ELPA, and `parse-csv` and `dash` from Melpa. Note that for `csv2ledger` to work properly, CSV files must be opened in buffers with `csv-mode` as the major mode. This should work automatically after installing `csv-mode`, but if you have issues, make sure to check this.
+
+The advantage of `csv-mode` is that it will also handle CSV files that use semicolon or TAB as separator (even if they have a `.csv` suffix). The separator should be recognised automatically without any user intervention.
+
+
 ## Customisation ##
 
 Several customisation options are present. The full list with a short explanation is presented here, but most of these options are discussed in more detail below.
