@@ -12,12 +12,12 @@ The purpose of this small library is to read bank transactions in a CSV file and
 2022-20-17 Aldi Supermarket
     ; Desc: Referenz 9999999XXX999 ALDI SAGT DANKE
     Expenses:Groceries
-    Assets:Checkings                                         -€25.10
+    Assets:Checking                                          -€25.10
 ```
 
 The description is optional, you can leave it out if you prefer. The format used for the amount is also configurable. By default, `csv2ledger` just copies the amount from the CSV file, but you can apply a conversion to it if you like.
 
-For ease of reference, I will use the following terms to refer to the various parts of the entry. The account associated with the bank account for the CSV file is called the *base* account. In the example here, it is `Assets:Checkings`. The other account, here `Expenses:Groceries`, is the *balancing account*, though I also refer to it as the *target account*. The real-life entity associated with the balancing account, here "Aldi Supermarket" is often called the payee, but since I generally put the sender there if I am the payee (i.e., for transactions where I *receive* money), I refer to it as the *title*.
+For ease of reference, I will use the following terms to refer to the various parts of the entry. The account associated with the bank account for the CSV file is called the *base* account. In the example here, it is `Assets:Checking`. The other account, here `Expenses:Groceries`, is the *balancing account*, though I also refer to it as the *target account*. The real-life entity associated with the balancing account, here "Aldi Supermarket" is often called the payee, but since I generally put the sender there if I am the payee (i.e., for transactions where I *receive* money), I refer to it as the *title*.
 
 Not indicated in the above example is the *effective* date (also called *posted*). This is the date that may follow the booking date, separated by an equal sign:
 
@@ -25,7 +25,7 @@ Not indicated in the above example is the *effective* date (also called *posted*
 2022-20-17=2022-20-19 * Aldi Supermarket
     ; Desc: Referenz 9999999XXX999 ALDI SAGT DANKE
     Expenses:Groceries
-    Assets:Checkings                                         -€25.10
+    Assets:Checking                                          -€25.10
 ```
 
 If you have this information in your CSV file, you can use it and add it to the entry. If such an effective date is found, the entry is also marked as cleared, i.e., an asterisk appears between the date and the title.
@@ -35,8 +35,7 @@ If you have this information in your CSV file, you can use it and add it to the 
 
 At the very least, you will need to set two user options: `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents your bank account in your ledger file.  By default, it is set to the value `"Assets:Checking"`.
 
-
-`c2l-csv-columns` is a list of column labels representing the columns in your CSV file. Note that these column labels should **not** be set to the column names in your CSV file. Rather, they should indicate to `csv2ledger` what type of data each column contains. The following column names are meaningful to `csv2ledger`:
+`c2l-csv-columns` is a list of column labels representing the columns in your CSV file. Note that these column labels should **not** be set to the column headers in your CSV file. Rather, they should be symbols indicating to `csv2ledger` what type of data each column contains. The following symbols are meaningful to `csv2ledger`:
 
 - `date`: booking date of the transaction
 - `posted`: effective date of the transaction
@@ -46,26 +45,27 @@ At the very least, you will need to set two user options: `c2l-base-account` and
 - `amount`: the amount of the payment (positive or negative)
 - `credit`: the amount received
 - `debit`: the amount payed
+- `_` (underscore): ignored column
 
-In the default setup, all these fields may be used to create the Ledger entry, though some of them are only used in specific circumstances.
+In the default setup, all these fields (except the underscore, obviously) may be used to create the Ledger entry, though some of them are only used in specific circumstances. Note that `c2l-csv-columns` should contain entries for *all* columns in the CSV file. Columns that you do not use should therefore be indicated with an underscore.
 
-First,  `payee` and `sender` never appear both. By default, `payee` is used as the title of the ledger entry and `sender` is ignored. If you set the option `c2l-account-holder` however, the `sender` will be used as the title for transactions in which you are the payee, i.e., when you receive money. If you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title, at least in the default setup.
+The `payee` and `sender` columns never appear both. By default, `payee` is used as the title of the ledger entry and `sender` is ignored. If you set the option `c2l-account-holder` however, the `sender` will be used as the title for transactions in which you are the payee, i.e., when you receive money. If you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title, at least in the default setup.
 
-The `amount` field is indented for the CSV field that contains the amount of the transaction. If your CSV files have two separate columns for amounts credit and amounts debit, use the column names `credit` and `debit` instead. `csv2ledger` then checks for each transaction which one of those fields actually contains an amount and uses that to create the ledger entry. Note that in this case, it is assumed that the `debit` field contains a negative amount, i.e., that it has a minus sign. If that is not the case, you should make sure that it does, as discussed below.
+The `amount` field is intended for the CSV field that contains the amount of the transaction. If your CSV files have two separate columns for amounts credit and amounts debit, use the column names `credit` and `debit` instead. `csv2ledger` then checks for each transaction which one of those fields actually contains an amount and uses that to create the ledger entry. Note that in this case, it is assumed that the `debit` field contains a negative amount, i.e., that it has a minus sign. If that is not the case, you should make sure that it does, as discussed below.
 
-The `description` and `posted` fields are entirely optional. If you have them and wish to include them in the ledger entry, add them to `c2l-csv-columns`. If you do not wish them included in the ledger entries, leave them out.
+The `description` and `posted` fields are entirely optional. If you have them and wish to include them in the ledger entry, add them to `c2l-csv-columns`. If you do not wish them included in the ledger entries, ignore them.
 
-Note that `c2l-csv-columns` should contain a column name for each column in your CSV files. If there are columns that you wish to ignore, use an underscore for them. For example, the CSV files from my bank have an effective (posted) date in them as the second element, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the balance, which `csv2ledger` doesn't use. Therefore, I set `c2l-csv-columns` to the following value:
+As an example example, this is my setting for `c2l-csv-columns` (keep in mind that the column labels are symbols, not strings):
 
 ```emacs-lisp
 (setq c2l-csv-columns '(date _ type description sender payee amount _))
 ```
 
-If you set `c2l-csv-columns` in your init file, keep in mind that the column labels are symbols, not strings.
+The CSV files from my bank have an effective (posted) date in them as the second column, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the account balance, which `csv2ledger` doesn't use. So I use an underscore for both these columns.
 
-Note that I have a `type` field in this list, which is not in the list of "meaningful" fields just above. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways, as discussed below.
+Note that I have a `type` field in this list, which is not in the list of  fields above. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways, as discussed below.
 
-In my CSV files, for example, the `type` column indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals, as discussed below.
+In my CSV files, the column that I label`type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. (Details below.)
 
 
 ## Running the conversion ##
@@ -87,20 +87,18 @@ restaurant    Expenses:Leisure:Restaurant
 
 Set the option `c2l-account-matchers-file` to point to this file. With the example matchers shown here, if the payee or description (or any other field you configure) of a transaction contains the string `"aldi"`, `Expenses:Groceries` is taken as the balancing account. There can be more than one matcher for one account: in the example, both `"aldi"` and `"lidl"` link to the account `Expenses:Groceries`.
 
-The matchers are simple substrings, not regular expressions. I have not found the need to use regular expressions for account matching, and prefer the simplicity of not having to worry about the special meaning of certain characters in them. But if you prefer, you can use regular expressions for account matching. To do this, set the variable `c2l-account-regexps` to an alist mapping regular expressions to accounts:
+The matchers are simple substrings, not regular expressions. I have not found the need to use regular expressions for account matching, and prefer the simplicity of not having to worry about the special meaning of certain characters in them. Internally, however, the matchers are turned into regular expressions and stored in the variable `c2l-account-regexps`. If you wish, you can set this variable yourself. Its value should be an alist mapping regular expressions to accounts:
 
 ```
 (("\\(?:aldi\\|lidl\\)" . "Expenses:Groceries")
  ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant"))
 ```
 
-`c2l-account-regexps` is not a customisable option, because normally the variable is set based on the contents of the account matchers file. If you set it to a value yourself though, `csv2ledger` will not overwrite it. (Just make sure the value is set before calling any functions from `csv2ledger`, and keep in mind that if you have multiple regexes matching a transaction, the first regex that matches wins out.)
+`c2l-account-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it. Just make sure that the value is set before calling any functions from `csv2ledger`, and keep in mind that if you have multiple regexes matching a transaction, the first regex that matches wins out.
 
-When `c2l-account-regexes` is compiled from the account matchers file, each account has only one entry in the alist, but this is not a requirement. You can have multiple regexes pointing to the same account.
+Matching an account specifically means matching the values of the fields listed in `cs2-target-match-fields` against the regexps in `c2l-account-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well. (In fact, I set it to the value `(description payee sender type)`.)
 
-By default, only the `payee` and `description` fields are compared against the account matchers. This can be configured with the option `c2l-target-match-fields`. Its default value is `(payee description)`, but you can add other fields to it. In fact, I set it to the value `(description payee sender type)`.
-
-Two things are of note here: first, the order of this list determines the order in which the fields get checked. I prefer for the `description` field to be checked first, because it tends to contain more information than the `payee` field. Second, I added the `type` field to the list. As already mentioned, `csv2ledger` does not do anything with this field, but I include it in `c2l-csv-columns` and I use it here to match the target account. Specifically, I use it to capture ATM withdrawals and set the target account to `Assets:Cash`.
+Two things are of note here: first, the order of this list determines the order in which the fields get checked. The default value is `(payee description)`, so the `payee` field is checked before `description`. I prefer for the `description` field to be checked first, because it tends to contain more information than the `payee` field, so in my setup, I put `descriptoin` first. Second, I added the `type` field to the list. As already mentioned, `csv2ledger` does not do anything with this field, but I include it in `c2l-csv-columns` and I use it here to match the target account. Specifically, I use it to capture ATM withdrawals and set the target account to `Assets:Cash`.
 
 Note that there is another way to automatically recognise an account, which involves writing your own function to do the recognition. This option is discussed below.
 
@@ -129,10 +127,10 @@ Since this is a very particular conversion, there is no function for it included
   "Convert AMOUNT from the format found in Postbank CSV files to ledger format.
 Specifically, this converts an amount of the form \"-3.150,20 €\"
 to \"-€3150.20\"."
-  (string-match "\\(-\\)?\\([[:digit:].]+\\),\\([[:digit:]]\\{2\\}\\)" amount)
+  (string-match "\\(-\\)?\\([[:digit:].]+\\)\\(?:,\\([[:digit:]]\\{2\\}\\)\\)?" amount)
   (let ((sign (or (match-string 1 amount) ""))
         (euros (string-replace "." "" (match-string 2 amount)))
-        (cents (match-string 3 amount)))
+        (cents (or (match-string 3 amount) "00")))
     (concat sign "€" euros "." cents)))
 ```
 
@@ -177,7 +175,7 @@ The transaction is passed as an alist of field-value pairs. For example, for the
 
 Note that the functions in `c2l-field-modify-functions` are applied before `c2l-transaction-modify-functions`, which is why the values for `date` and `amount` already appear in their modified forms here.
 
-Your function can make any change to the transaction you wish. The only requirement is that after all functions in `c2l-transaction-modify-functions` have been applied, the resulting transaction alist contains at least the fields `date`, `payee` and `amount` and `account`,  because `csv2ledger` needs them to construct the ledger entry.
+Your function can make any change to the transaction you wish. The only requirement is that after all functions in `c2l-transaction-modify-functions` have been applied, the resulting transaction alist contains at least the fields `date`, `payee`, `amount` and `account`,  because `csv2ledger` needs them to construct the ledger entry.
 
 Note that the functions in `c2l-transaction-modify-functions` are applied in the order in which they appear in the list. Each function is passed the return value of the previous one, so you can add a field to the transaction in one function and refer to it in a later function.
 
