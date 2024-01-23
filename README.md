@@ -117,7 +117,7 @@ The matchers are simple substrings, not regular expressions. I have not found th
                             ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant")))
 ```
 
-`c2l-matcher-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regex that matches wins out.
+`c2l-matcher-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regexp that matches wins out.
 
 Matching an account specifically means matching the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-matcher-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well. (In fact, I set it to the value `(description payee sender type)`.)
 
