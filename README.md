@@ -52,7 +52,7 @@ Several customisation options are present. The full list with a short explanatio
 
 ## Setup ##
 
-At the very least, you will need to set two user options: `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents your bank account in your ledger file.  By default, it is set to the value `"Assets:Checking"`.
+At the very least, you will need to set two user options: `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents the bank account in your ledger file.  By default, it is set to the value `"Assets:Checking"`.
 
 `c2l-csv-columns` is a list of column labels representing the columns in your CSV file. Note that these column labels should **not** be set to the column headers in your CSV file. Rather, they should be symbols indicating to `csv2ledger` what type of data each column contains. The following symbols are meaningful to `csv2ledger`:
 
@@ -68,7 +68,7 @@ At the very least, you will need to set two user options: `c2l-base-account` and
 
 In the default setup, all these fields (except the underscore, obviously) may be used to create the Ledger entry, though some of them are only used in specific circumstances. Note that `c2l-csv-columns` should contain entries for *all* columns in the CSV file. Columns that you do not use should therefore be indicated with an underscore.
 
-The `payee` and `sender` columns never appear both. By default, `payee` is used as the title of the ledger entry and `sender` is ignored. If you set the option `c2l-account-holder` however, the `sender` will be used as the title for transactions in which you are the payee, i.e., when you receive money. If you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title, at least in the default setup.
+The `payee` and `sender` columns never appear both. By default, `payee` is used as the title of the ledger entry and `sender` is ignored. If you set the option `c2l-account-holder` however, the `sender` will be used as the title for transactions in which you are the payee, i.e., when you receive money. If you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title (at least in the default setup).
 
 The `amount` field is intended for the CSV field that contains the amount of the transaction. If your CSV files have two separate columns for amounts credit and amounts debit, use the column names `credit` and `debit` instead. `csv2ledger` then checks for each transaction which one of those fields actually contains an amount and uses that to create the ledger entry. Note that in this case, it is assumed that the `debit` field contains a negative amount, i.e., that it has a minus sign. If that is not the case, you should make sure that it does, as discussed below.
 
@@ -82,9 +82,7 @@ As an example example, this is my setting for `c2l-csv-columns` (keep in mind th
 
 The CSV files from my bank have an effective (posted) date in them as the second column, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the account balance, which `csv2ledger` doesn't use. So I use an underscore for both these columns.
 
-Note that I have a `type` field in this list, which is not in the list of  fields above. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways, as discussed below.
-
-In my CSV files, the column that I label`type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. (Details below.)
+Note that I have a `type` field in this list, which is not in the list of  fields above. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways, as discussed below. In my CSV files, the column that I label`type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. (Details below.)
 
 
 ## Running the conversion ##
@@ -119,7 +117,7 @@ The matchers are simple substrings, not regular expressions. I have not found th
  ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant"))
 ```
 
-`c2l-account-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger`, and keep in mind that if you have multiple regexes matching a transaction, the first regex that matches wins out.
+`c2l-account-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regex that matches wins out.
 
 Matching an account specifically means matching the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-account-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well. (In fact, I set it to the value `(description payee sender type)`.)
 
@@ -177,7 +175,7 @@ Another possible use of `c2l-field-modify-functions` is to make sure the value o
 
 ### Modifying the transaction ###
 
-One potential disadvantage of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of some other field in the transaction. If you need to make such a change to the transaction, you can set the option `c2l-transaction-modify-functions` to a list of functions that take the entire transaction as its argument and return a modified transaction.
+One potential disadvantage of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of some other field or fields in the transaction. If you need to make such a change to the transaction, you can set the option `c2l-transaction-modify-functions` to a list of functions that take the entire transaction as its argument and return a modified transaction.
 
 The transaction is passed as an alist of field-value pairs. For example, for the ledger entry shown above, the transaction would be as follows:
 
@@ -214,7 +212,7 @@ If you need to replace this function with a custom function, note that it is imp
 Another important point to note is that the amount in the `amount` field must be a negative amount if it is an amount debit, i.e., it must have a minus sign. If you have a separate `debit` column in your CSV files with amounts that are not negative, make sure to add a minus sign. The easiest way to do this is in `c2l-field-modify-functions`.
 
 
-### Setting the target account (v. 2)) ###
+### Setting the target account (v. 2) ###
 
 The third function in `c2l-transaction-modify-functions` is `c2l-create-account`. This is the function that checks the fields of the transaction against the account matchers, and if one is not found, uses `c2l-fallback-account` or asks the user. If you wish to use a different method to set the account, you can replace this function with a custom one. It needs to add an `account` field to the transaction, but there are no restrictions on how the account is determined.
 
