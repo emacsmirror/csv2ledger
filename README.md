@@ -35,18 +35,18 @@ If you have this information in your CSV file, you can use it and add it to the 
 
 Several customisation options are present. The full list with a short explanation is presented here, but most of these options are discussed in more detail below.
 
-- `c2l-accounts-file` (`nil`) --- File pointing to the ledger account definitions, used for completion.
-- `c2l-base-account` (`"Assets:Checking"`) --- Account of the CSV file.
-- `c2l-fallback-account` (`nil`) --- Target account if one cannot be determined automatically.
-- `c2l-account-holder` (`nil`) -- Name of the account holder that may appear as payee or sender.
-- `c2l-csv-columns` (`'()`) --- List describing the columns in the CSV file.
-- `c2l-transaction-modify-functions` (`'(c2l-create-title c2l-create-amount c2l-create-account)`) --- Functions used to modify the transaction data.
-- `c2l-field-modify-functions` (`nil`) -- Functions used to modify field values.
-- `c2l-entry-function` (`#'c2l-compose-entry`) -- Function used to create the actual ledger transaction.
-- `c2l-account-matchers-file` (`nil`) -- File with substrings matching specific target accounts.
-- `c2l-target-match-fields` (`'(payee description)`) --- Fields in the transaction used to match against target accounts.
-- `c2l-auto-cleared` (`nil`) --- Whether to auto-clear transactions.
-- `c2l-alignment-column` (`52`) --- Column to which the amount is aligned.
+- `c2l-accounts-file` (`nil`) — File pointing to the ledger account definitions, used for completion.
+- `c2l-base-account` (`"Assets:Checking"`) — Account of the CSV file.
+- `c2l-fallback-account` (`nil`) — Target account if one cannot be determined automatically.
+- `c2l-account-holder` (`nil`) — Name of the account holder that may appear as payee or sender.
+- `c2l-csv-columns` (`'()`) — List describing the columns in the CSV file.
+- `c2l-transaction-modify-functions` (`'(c2l-create-title c2l-create-amount c2l-create-account)`) — Functions used to modify the transaction data.
+- `c2l-field-modify-functions` (`nil`) — Functions used to modify field values.
+- `c2l-entry-function` (`#'c2l-compose-entry`) — Function used to create the actual ledger transaction.
+- `c2l-account-matchers-file` (`nil`) — File with substrings matching specific target accounts.
+- `c2l-target-match-fields` (`'(payee description)`) — Fields in the transaction used to match against target accounts.
+- `c2l-auto-cleared` (`nil`) — Whether to auto-clear transactions.
+- `c2l-alignment-column` (`52`) — Column to which the amount is aligned.
 
 
 
