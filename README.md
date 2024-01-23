@@ -110,16 +110,16 @@ restaurant    Expenses:Leisure:Restaurant
 
 Set the option `c2l-account-matchers-file` to point to this file. With the example matchers shown here, if the payee or description (or any other field you configure) of a transaction contains the string `"aldi"`, `Expenses:Groceries` is taken as the balancing account. There can be more than one matcher for one account: in the example, both `"aldi"` and `"lidl"` link to the account `Expenses:Groceries`.
 
-The matchers are simple substrings, not regular expressions. I have not found the need to use regular expressions for account matching, and prefer the simplicity of not having to worry about the special meaning of certain characters in them. Internally, however, the matchers are turned into regular expressions and stored in the variable `c2l-account-regexps`. If you prefer to use regular expressions, you can set this variable yourself. Its value should be an alist mapping regular expressions to accounts:
+The matchers are simple substrings, not regular expressions. I have not found the need to use regular expressions for account matching, and prefer the simplicity of not having to worry about the special meaning of certain characters in them. Internally, however, the matchers are turned into regular expressions and stored in the variable `c2l-matcher-regexps`. If you prefer to use regular expressions, you can set this variable yourself. Its value should be an alist mapping regular expressions to accounts:
 
 ```
 (("\\(?:aldi\\|lidl\\)" . "Expenses:Groceries")
  ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant"))
 ```
 
-`c2l-account-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regex that matches wins out.
+`c2l-matcher-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regex that matches wins out.
 
-Matching an account specifically means matching the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-account-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well. (In fact, I set it to the value `(description payee sender type)`.)
+Matching an account specifically means matching the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-matcher-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well. (In fact, I set it to the value `(description payee sender type)`.)
 
 Two things are of note here: first, the order of this list determines the order in which the fields get checked. The default value is `(payee description)`, so the `payee` field is checked before `description`. I prefer for the `description` field to be checked first, because it tends to contain more information than the `payee` field, so in my setup, I put `description` first. Second, I added the `type` field to the list. As already mentioned, `csv2ledger` does not do anything with this field, but I include it in `c2l-csv-columns` and I use it here to match the target account. Specifically, I use it to capture ATM withdrawals and set the target account to `Assets:Cash`.
 
