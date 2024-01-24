@@ -86,7 +86,7 @@ As an example example, this is my setting for `c2l-csv-columns` (keep in mind th
 (setopt c2l-csv-columns '(date _ type description sender payee amount _))
 ```
 
-The CSV files from my bank have an effective (posted) date in them as the second column, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the account balance, which `csv2ledger` doesn't use. So I use an underscore for both these columns.
+The CSV files from my bank have an effective (posted) date in the second column, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the account balance, which `csv2ledger` doesn't use. So I use an underscore for both these columns.
 
 Note that I have a `type` field in this list, which is not in the list of  fields above. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways, as discussed below. In my CSV files, the column that I label`type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. (Details below.)
 
