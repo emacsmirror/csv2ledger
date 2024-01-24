@@ -35,9 +35,7 @@ If you have this information in your CSV file, you can use it and add it to the 
 
 For the moment, `csv2ledger` needs to be installed manually. Put the file `csv2ledger.el` in your load path, byte-compile it if you wish, and `require` it in your init file.
 
-Make sure to install the dependencies as well: `csv-mode` from GNU ELPA, and `parse-csv` and `dash` from Melpa. Note that for `csv2ledger` to work properly, CSV files must be opened in buffers with `csv-mode` as the major mode. This should work automatically after installing `csv-mode`, but if you have issues, make sure to check this.
-
-The advantage of `csv-mode` is that it will also handle CSV files that use semicolon or TAB as separator (even if they have a `.csv` suffix). The separator should be recognised automatically without any user intervention.
+Make sure to install the dependencies as well: `csv-mode` from GNU ELPA, and `parse-csv` and `dash` from Melpa. Note that for `csv2ledger` to work properly, CSV files must be opened in buffers with `csv-mode` as the major mode. This should work automatically after installing the `csv-mode` package, but if you have issues, make sure to check this.
 
 
 ## Customisation ##
@@ -56,7 +54,6 @@ Several customisation options are present. The full list with a short explanatio
 - `c2l-target-match-fields` (`'(payee description)`) — Fields in the transaction used to match against target accounts.
 - `c2l-auto-cleared` (`nil`) — Whether to auto-clear transactions.
 - `c2l-alignment-column` (`52`) — Column to which the amount is aligned.
-
 
 
 ## Setup ##
@@ -99,6 +96,10 @@ Note that I have a `type` field in this list, which is not in the list of  field
 With these options set up, it is possible to convert a CSV file. To do so, open the CSV file in Emacs and run `c2l-convert-buffer`. This command creates a new buffer named `*Csv2Ledger Results*` and puts all converted CSV transactions in it. If you do not wish to convert the entire buffer, you can also select a region and call `M-x c2l-convert-region` instead. Note that if a buffer with the name `"Csv2Ledger Results"` already exists, it is reused. That is, its contents is erased before the new entries are put in it.
 
 There is also the command `c2l-csv-entry-as-kill`: this converts the single entry that point is on and places the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing. This is an easy way of testing if your conversion settings are correct.
+
+`csv2ledger` expects that `csv-mode` is used as the major mode for the buffer visiting your CSV file, and `parse-csv` to parse the contents of the CSV file. This means it is able to automatically handle CSV files that use a semicolon as separator instead of a comma, and also TSV files, which use the TAB character as separator. In addition, `csv2ledger` tries to determine if the first line of the CSV file is a header line or not, by looking at the `amount`, `debit` and `credit` fields and seeing if any of their values look like an amount. If that is not the case, it is assumed that the first line is a header line and it is skipped in the conversion.
+
+You should make sure, however, that all the data in the file is CSV data. Some banks place some additional information at the top of the file (such as account number, total balance, etc.) that is not part of the CSV data. If this is the case, `csv-mode` may have trouble determining the separator, so it is usually best to remove this data and reread the file. Alternatively, do `M-x csv-set-separator` to set the correct separator and then use `c2l-convert-region` for the data that you want to convert.
 
 
 ## Setting the target account ##
@@ -184,9 +185,9 @@ Another possible use of `c2l-field-modify-functions` is to make sure the value o
 
 ### Modifying the transaction ###
 
-One potential disadvantage of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of some other field or fields in the transaction. If you need to make such a change to the transaction, you can set the option `c2l-transaction-modify-functions` to a list of functions that take the entire transaction as its argument and return a modified transaction.
+One limitation of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of some other field or fields in the transaction. If you need to make such a change, you add a function to the option `c2l-transaction-modify-functions`. This option holds a list of functions that take the entire transaction as its argument and return a modified transaction.
 
-The transaction is passed as an alist of field-value pairs. For example, for the ledger entry shown above, the transaction would be as follows:
+The transaction is passed as an alist of field-value pairs, with the fields being symbols and the values being strings. For example, for the ledger entry shown above, the transaction would be as follows:
 
 ```
 ((date . "2022-20-17")
@@ -198,7 +199,7 @@ The transaction is passed as an alist of field-value pairs. For example, for the
 
 Note that the functions in `c2l-field-modify-functions` are applied before `c2l-transaction-modify-functions`, which is why the values for `date` and `amount` already appear in their modified forms here.
 
-Your function can make any change to the transaction you wish. The only requirement is that after all functions in `c2l-transaction-modify-functions` have been applied, the resulting transaction alist contains at least the fields `date`, `payee`, `amount` and `account`,  because `csv2ledger` needs them to construct the ledger entry.
+Your function can make any change to the transaction you wish. The only requirement is that after all functions in `c2l-transaction-modify-functions` have been applied, the resulting transaction alist contains at least the fields `date`, `title`, `amount` and `account`,  because `csv2ledger` needs them to construct the ledger entry. (Assuming you use the default function for creating the text of the entry; see below for details.)
 
 Note that the functions in `c2l-transaction-modify-functions` are applied in the order in which they appear in the list. Each function is passed the return value of the previous one, so you can add a field to the transaction in one function and refer to it in a later function.
 
@@ -228,5 +229,6 @@ The third function in `c2l-transaction-modify-functions` is `c2l-create-account`
 
 ### Creating the entry ###
 
-After all modification functions have been called, the resulting transaction is passed to the function pointed to by the user option `c2l-entry-function` . The default value of this option is the function `c2l-compose-entry`, which creates entries in the form shown above. If that format does not suit your needs, you can use a custom function instead. It should take the transaction as an alist and return a string that can be inserted into a ledger buffer.
+After all modification functions have been called, the resulting transaction is passed to the function pointed to by the user option `c2l-entry-function`. The default value of this option is the function `c2l-compose-entry`, which creates entries in the form shown above. If that format does not suit your needs, you can use a custom function instead. It should take the transaction as an alist and return a string that can be inserted into a ledger buffer.
 
+The function `c2l-compose-entry` requires that at least the `date`, `title`, `amount` and `account` fields be present in the transaction. In addition, the fields `description` and `posted` are used if they are present. If you write your own custom function, that requirement no longer holds, of course. (In fact, there is no real requirement that what the `c2l-entry-function` writes out is an actual ledger entry. You could have it convert CSV entries into whatever format you prefer.)
