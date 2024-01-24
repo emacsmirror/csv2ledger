@@ -88,7 +88,7 @@ As an example example, this is my setting for `c2l-csv-columns` (keep in mind th
 
 The CSV files from my bank have an effective (posted) date in the second column, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the account balance, which `csv2ledger` doesn't use. So I use an underscore for both these columns.
 
-Note that I have a `type` field in this list, which is not in the list of  fields above. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways, as discussed below. In my CSV files, the column that I label`type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. (Details below.)
+Note that I have a `type` field in this list, which is not one of the fields that are meaningful to `csv2ledger`. You can, in fact, add any field to `c2l-csv-columns` that you like. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways. In my CSV files, the column that I label`type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. Details are discussed below.
 
 
 ## Running the conversion ##
@@ -97,7 +97,9 @@ With these options set up, it is possible to convert a CSV file. To do so, open 
 
 There is also the command `c2l-csv-entry-as-kill`: this converts the single entry that point is on and places the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing. This is an easy way of testing if your conversion settings are correct.
 
-`csv2ledger` expects that `csv-mode` is used as the major mode for the buffer visiting your CSV file, and `parse-csv` to parse the contents of the CSV file. This means it is able to automatically handle CSV files that use a semicolon as separator instead of a comma, and also TSV files, which use the TAB character as separator. In addition, `csv2ledger` tries to determine if the first line of the CSV file is a header line or not, by looking at the `amount`, `debit` and `credit` fields and seeing if any of their values look like an amount. If that is not the case, it is assumed that the first line is a header line and it is skipped in the conversion.
+`csv2ledger` expects that `csv-mode` is used as the major mode for the buffer visiting your CSV file. One advantage of this is that it is possible to handle CSV files that use a semicolon as separator instead of a comma, and also TSV files, which use the TAB character as separator. You should not need to change anything if the CSV files provided by your bank use such an alternative format.
+
+Additionally, `csv2ledger` tries to determine if the first line of the CSV file is a header line or not, by looking at the `amount`, `debit` and `credit` fields and seeing if any of their values look like an amount. If that is not the case, it is assumed that the first line is a header line and it is skipped in the conversion.
 
 You should make sure, however, that all the data in the file is CSV data. Some banks place some additional information at the top of the file (such as account number, total balance, etc.) that is not part of the CSV data. If this is the case, `csv-mode` may have trouble determining the separator, so it is usually best to remove this data and reread the file. Alternatively, do `M-x csv-set-separator` to set the correct separator and then use `c2l-convert-region` for the data that you want to convert.
 
@@ -108,7 +110,7 @@ In order to convert an entry, `csv2ledger` needs to know which account to use as
 
 If no target account is found this way, you will be asked for the target account in the minibuffer. If you have defined your accounts in your ledger file (or in a file imported in your ledger file), you can point the option `c2l-accounts-file` to it and Emacs will provide those accounts as completion candidates.
 
-If you prefer not to be asked for each unrecognised transaction, you can set the option `c2l-fallback-account` to an account that will be used instead. Note that this does not have to be an actual account. Rather, it should be something that you can easily search for in the ledger file, because you will most likely need to adjust the relevant transactions afterwards.
+If you prefer not to be asked for each unrecognised transaction, you can set the option `c2l-fallback-account` to an account that will be used instead, e.g., `Expenses:Miscellaneous` or `Expenses:Fallback`. Note that this does not have to be an actual account. Rather, it should be something that you can easily search for in the ledger file, because you will most likely need to adjust the relevant transactions afterwards.
 
 The account matchers file is a simple TSV (tab-separated values) file that matches strings to accounts:
 
@@ -127,7 +129,7 @@ The matchers are simple substrings, not regular expressions. I have not found th
                             ("\\(?:restaurant\\)" . "Expenses:Leasure:Restaurant")))
 ```
 
-`c2l-matcher-regexps` is not a customisable option. If you set it to a value yourself though, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file`). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regexp that matches wins out.
+`c2l-matcher-regexps` is not a customisable option. However, if you set it to a value yourself, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file` if it is set.). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regexp that matches wins out.
 
 Matching an account specifically means matching the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-matcher-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well. (In fact, I set it to the value `(description payee sender type)`.)
 
@@ -156,7 +158,7 @@ I have a similar problem with the amount. In the CSV file, amounts are given as 
 Since this is a very particular conversion, there is no function for it included in `csv2ledger`, but if you face a similar problem, you can use or adapt the following:
 
 ```emacs-lisp
-(defun c2l-convert-postbank-to-ledger-amount (amount)
+(defun jk/c2l-convert-postbank-to-ledger-amount (amount)
   "Convert AMOUNT from the format found in Postbank CSV files to ledger format.
 Specifically, this converts an amount of the form \"-3.150,20 €\"
 to \"-€3150.20\"."
@@ -172,7 +174,7 @@ The setting for `c2l-field-modify-functions` then ends up like this:
 ```emacs-lisp
 (setopt c2l-field-modify-functions
   '((date . c2l-convert-little-endian-to-iso8601-date)
-    (amount . c2l-convert-postbank-to-ledger-amount)))
+    (amount . jk/c2l-convert-postbank-to-ledger-amount)))
 ```
 
 Another possible use of `c2l-field-modify-functions` is to make sure the value of the `debit` field is is a negative value. For example, if your CSV file lists amounts debit as `"€25.14"` instead of `"-€25.14"`, you can change this with the following setup:
@@ -199,7 +201,7 @@ The transaction is passed as an alist of field-value pairs, with the fields bein
 
 Note that the functions in `c2l-field-modify-functions` are applied before `c2l-transaction-modify-functions`, which is why the values for `date` and `amount` already appear in their modified forms here.
 
-Your function can make any change to the transaction you wish. The only requirement is that after all functions in `c2l-transaction-modify-functions` have been applied, the resulting transaction alist contains at least the fields `date`, `title`, `amount` and `account`,  because `csv2ledger` needs them to construct the ledger entry. (Assuming you use the default function for creating the text of the entry; see below for details.)
+Your function can make any change to the transaction you wish. The only requirement is that after all functions in `c2l-transaction-modify-functions` have been applied, the resulting transaction alist contains at least the fields `date`, `title`, `amount` and `account`,  because `csv2ledger` needs them to construct the ledger entry. (Assuming you use the default function for creating the text of the entry. See below for details.)
 
 Note that the functions in `c2l-transaction-modify-functions` are applied in the order in which they appear in the list. Each function is passed the return value of the previous one, so you can add a field to the transaction in one function and refer to it in a later function.
 
@@ -208,7 +210,7 @@ Note that the functions in `c2l-transaction-modify-functions` are applied in the
 
 ### Setting the title ###
 
-As explained above, by default, `cs2vledger` uses the payee for the title of the ledger entry. However, it will use the sender as the title instead if the user option `c2l-account-holder` matches the payee, provided that option is set.
+As explained above, by default, `csv2ledger` uses the payee for the title of the ledger entry. However, it will use the sender as the title instead if the user option `c2l-account-holder` matches the payee, provided that option is set.
 
 The particular function that takes care of this is `c2l-create-title` and it is the first function in `c2l-transaction-modify-functions`. You can replace it with a custom function if you want to construct the title differently.
 
@@ -219,7 +221,7 @@ The second function in `c2l-transaction-modify-functions` is a function to creat
 
 If you need to replace this function with a custom function, note that it is important that an `amount` field is created in the transaction, because that is what is eventually used to construct the entry. If a transaction does not have an `amount` field after the functions in `c2l-transaction-modify-functions` have been applied, the ledger entry will lack an amount and will be invalid.
 
-Another important point to note is that the amount in the `amount` field must be a negative amount if it is an amount debit, i.e., it must have a minus sign. If you have a separate `debit` column in your CSV files with amounts that are not negative, make sure to add a minus sign. The easiest way to do this is in `c2l-field-modify-functions`.
+Another important point to note is that the amount in the `amount` field must be a negative amount if it is an amount debit, i.e., it must have a minus sign. If you have a separate `debit` column in your CSV files with amounts that are not negative, make sure to add a minus sign. The easiest way to do this is in `c2l-field-modify-functions`, as mentioned above.
 
 
 ### Setting the target account (v. 2) ###
