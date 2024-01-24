@@ -493,9 +493,8 @@ beforehand if it already exists."
   "Convert the CSV entries in the current buffer to ledger entries.
 The converted entries are placed in the buffer \"*Csv2Ledger
 Results*\", which is erased beforehand if it already exists.  If
-the first line of the buffer is a header line, it is
-skipped.  (The first line is considered to be a header if no
-amount can be found in the amount column.)"
+the first line of the buffer looks like a header line (see
+`c2l--has-header'), it is skipped."
   (interactive)
   (let ((beg (save-mark-and-excursion
                (goto-char (point-min))
