@@ -415,9 +415,9 @@ names are taken from `c2l-csv-columns'."
 
 (defun c2l--has-header ()
   "Return non-nil if the current CSV buffer appears to have a header.
-Essentially, this function just checks the fields `amount',
-`credit' and `debit' and returns non-nil if either one of these
-contains something that looks like a amount."
+Essentially, this function just checks the `amount', `credit' and
+`debit' fields on the first line of the buffer and returns non-nil
+if one of these contains something that looks like an amount."
   (save-mark-and-excursion
     (goto-char (point-min))
     (let* ((transaction (c2l--get-current-row)))
