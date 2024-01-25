@@ -158,10 +158,8 @@ I have a similar problem with the amount. In the CSV file, amounts are given as 
 Since this is a very particular conversion, there is no function for it included in `csv2ledger`, but if you face a similar problem, you can use or adapt the following:
 
 ```emacs-lisp
-(defun jk/c2l-convert-postbank-to-ledger-amount (amount)
-  "Convert AMOUNT from the format found in Postbank CSV files to ledger format.
-Specifically, this converts an amount of the form \"-3.150,20 €\"
-to \"-€3150.20\"."
+(defun jk/c2l-convert-amount (amount)
+  "Convert AMOUNT from the format \"-3.150,20 €\" to \"-€3150.20\"."
   (string-match "\\(-\\)?\\([[:digit:].]+\\)\\(?:,\\([[:digit:]]\\{2\\}\\)\\)?" amount)
   (let ((sign (or (match-string 1 amount) ""))
         (euros (string-replace "." "" (match-string 2 amount)))
