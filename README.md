@@ -172,7 +172,7 @@ The setting for `c2l-field-modify-functions` then ends up like this:
 ```emacs-lisp
 (setopt c2l-field-modify-functions
   '((date . c2l-convert-little-endian-to-iso8601-date)
-    (amount . jk/c2l-convert-postbank-to-ledger-amount)))
+    (amount . jk/c2l-convert-amount)))
 ```
 
 Another possible use of `c2l-field-modify-functions` is to make sure the value of the `debit` field is is a negative value. For example, if your CSV file lists amounts debit as `"€25.14"` instead of `"-€25.14"`, you can change this with the following setup:
