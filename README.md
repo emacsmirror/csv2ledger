@@ -185,7 +185,7 @@ Another possible use of `c2l-field-modify-functions` is to make sure the value o
 
 ### Modifying the transaction ###
 
-One limitation of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of some other field or fields in the transaction. If you need to make such a change, you add a function to the option `c2l-transaction-modify-functions`. This option holds a list of functions that take the entire transaction as its argument and return a modified transaction.
+One limitation of the functions in `c2l-field-modify-functions` is that they only take the value of a single field as argument. This is insufficient if you want to modify a field value on the basis of some other field or fields in the transaction, or if you want to add new fields. If you need to make such a change, you add a function to the option `c2l-transaction-modify-functions`. This option holds a list of functions that take the entire transaction as its argument and return a modified transaction.
 
 The transaction is passed as an alist of field-value pairs, with the fields being symbols and the values being strings. For example, for the ledger entry shown above, the transaction would be as follows:
 
