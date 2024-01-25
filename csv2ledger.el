@@ -146,6 +146,8 @@ This is the composite function created with the functions in
 FNS is a list of functions, which is reversed and then composed
 into a single function taking a transaction alist as argument and
 returning a modified transaction alist."
+  ;; Note: We need to reverse FNS, because `-compose' composes them from right
+  ;; to left (i.e., the last function in FNS is applied first).
   (setq c2l-transaction-modifier (apply #'-compose (reverse fns))))
 
 (defcustom c2l-transaction-modify-functions '(c2l-create-title c2l-create-amount c2l-create-account)
