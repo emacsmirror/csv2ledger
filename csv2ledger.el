@@ -347,7 +347,7 @@ Return the modified transaction."
 
 (defun c2l--amount-p (str)
   "Return non-nil is STR is likely to be an amount."
-  (if (string-match-p "[0-9]+[0-9.,]*[.,][0-9]\\{2\\}" str)
+  (if (string-match-p "[0-9]+[0-9.,]*\\(?:[.,][0-9]\\{2\\}\\)?" str)
       str))
 
 (defun c2l-compose-entry (transaction)
