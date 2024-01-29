@@ -184,6 +184,54 @@ Ledger entry."
   :type 'function
   :group 'csv2ledger)
 
+(defvar c2l-matcher-regexps nil
+  "Alist of matcher regexps and their acounts.
+Each item should be a cons cell of a regular expression and an
+account name.  If the regular expression matches any of the
+fields in `c2l-target-match-fields', its corresponding account is
+used as the target account.
+
+This variable is normally given a value based on the matchers in
+`c2l-account-matchers-file', but it can also be set directly.")
+
+(defun c2l--read-account-matchers (file)
+  "Read account matchers from FILE.
+See the documentation for the variable
+`c2l-account-matchers-file' for details on the matcher file."
+  (when (stringp file)
+    (if (file-readable-p file)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (let (accounts)
+            (while (looking-at "\\([[:print:]]+\\)\t\\([[:print:]]+\\)")
+              (let ((matcher (match-string 1))
+                    (account (match-string 2)))
+                (push (cons matcher account) accounts))
+              (forward-line 1))
+            accounts))
+      (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
+
+(defun c2l--compile-matcher-regexps (accounts)
+  "Create efficient regular expressions for the matchers in ACCOUNTS.
+ACCOUNTS is a list of (<matcher> . <account>) conses, where
+<matcher> should be unique but <account> may occur multiple
+times.  Return value is an alist in which each account in
+ACCOUNTS is mapped to a regular expression matching all matchers
+for that account."
+  (mapcar (lambda (e)
+            (cons (regexp-opt (mapcar #'car (cdr e)))
+                  (car e)))
+          (seq-group-by #'cdr accounts)))
+
+(defun c2l-set-matcher-regexps (val)
+  "Set `c2l-matcher-regexps' based on VAL, unless it already has a value."
+  (unless c2l-matcher-regexps
+    (setq c2l-matcher-regexps
+          (-> val
+              (c2l--read-account-matchers)
+              (c2l--compile-matcher-regexps)))))
+
 (defcustom c2l-account-matchers-file nil
   "File containing matcher strings mapped to accounts.
 This should be a TSV (tab-separated values) file containing one
@@ -198,20 +246,17 @@ where the two columns are separated by a TAB.
 The matcher is a string (not a regular expression).  If a matcher
 is found in any of the fields listed in the option
 `c2l-target-match-fields', the corresponding account is used to
-book the transaction."
+book the transaction.
+
+Note that the variable `c2l-matcher-regexps' is set based on the
+value of this option.  Therefore, if you set this option outside
+of Customize, make sure to also call the function
+`c2l-set-matcher-regexps'."
   :type 'file
-  :group 'csv2ledger)
-
-(defvar c2l-matcher-regexps nil
-  "Alist of matcher regexps and their acounts.
-Each item should be a cons cell of a regular expression and an
-account name.  If the regular expression matches any of the
-fields in `c2l-target-match-fields', its corresponding account is
-used as the target account.
-
-This variable is normally given a value based on the matchers in
-`c2l-account-matchers-file', but you can also set in directly if
-you prefer to use regexps to match accounts.")
+  :group 'csv2ledger
+  :set (lambda (sym val)
+         (set sym val)
+         (c2l-set-matcher-regexps val)))
 
 (defcustom c2l-target-match-fields '(payee description)
   "List of fields used for determining the target account.
@@ -339,43 +384,8 @@ cleared, even if there is no value for `posted' in TRANSACTION."
             accounts))
       (user-error "[Csv2Ledger] Accounts file `%s' not found" file))))
 
-(defun c2l--read-account-matchers (file)
-  "Read account matchers from FILE.
-See the documentation for the variable
-`c2l-account-matchers-file' for details on the matcher file."
-  (when (stringp file)
-    (if (file-readable-p file)
-        (with-temp-buffer
-          (insert-file-contents file)
-          (goto-char (point-min))
-          (let (accounts)
-            (while (looking-at "\\([[:print:]]+\\)\t\\([[:print:]]+\\)")
-              (let ((matcher (match-string 1))
-                    (account (match-string 2)))
-                (push (cons matcher account) accounts))
-              (forward-line 1))
-            accounts))
-      (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
-
-(defun c2l--compile-matcher-regexps (accounts)
-  "Create efficient regular expressions for the matchers in ACCOUNTS.
-ACCOUNTS is a list of (<matcher> . <account>) conses, where
-<matcher> should be unique but <account> may occur multiple
-times.  Return value is an alist in which each account in
-ACCOUNTS is mapped to a regular expression matching all matchers
-for that account."
-  (mapcar (lambda (e)
-            (cons (regexp-opt (mapcar #'car (cdr e)))
-                  (car e)))
-          (seq-group-by #'cdr accounts)))
-
 (defun c2l--match-account (str)
   "Try to match STR to an account."
-  (unless c2l-matcher-regexps
-    (setq c2l-matcher-regexps
-          (-> c2l-account-matchers-file
-              (c2l--read-account-matchers)
-              (c2l--compile-matcher-regexps))))
   (--some (if (string-match-p (car it) str)
               (cdr it))
           c2l-matcher-regexps))
