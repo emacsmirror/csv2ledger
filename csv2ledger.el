@@ -346,7 +346,7 @@ Return the modified transaction."
 ;;; Helper functions
 
 (defun c2l--amount-p (str)
-  "Return non-nil is STR is likely to be an amount."
+  "Return non-nil if STR is likely to be an amount."
   (if (string-match-p "[0-9]+[0-9.,]*\\(?:[.,][0-9]\\{2\\}\\)?" str)
       str))
 
