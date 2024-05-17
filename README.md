@@ -251,7 +251,7 @@ How to set up directory-local variables is discussed in the Emacs manual (see th
               (c2l-auto-cleared . t))))
 ```
 
-This will apply all listed `c2l` settings to all CSV files in the directory in containing the `.dir-locals.el` file. As long as you keep the CSV files from the two banks in different directories, you can use this strategy to set them up differently.
+This will apply all listed `c2l` settings to all CSV files in the directory containing the `.dir-locals.el` file. As long as you keep the CSV files from the two banks in different directories, you can use this strategy to set them up differently.
 
 If you prefer to keep your `csv2ledger` configuration in your init file, you can use the functions `dir-locals-set-directory-class` and `dir-locals-set-class-variables` to set up directory-local variables for specific directories. The Info node mentioned above explains how to do this.
 
