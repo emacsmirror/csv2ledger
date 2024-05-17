@@ -257,4 +257,4 @@ If you prefer to keep your `csv2ledger` configuration in your init file, you can
 
 One (small) disadvantage of this approach is that some of the customisation options are considered unsafe or risky by Emacs, so when you open a CSV file, Emacs will ask you if you want to apply them. If you tell Emacs to apply them and set them as safe for future use, you'll only see that question once for a directory, however.
 
-Keep in mind that if you set an option in your init file, it will be used in every CSV file you open, unless you override that setting in a `.dir-locals.el` file. This means that if you have settings that you want to apply to all CSV files, you can set them in your init file, instead of having to repeat the option in every `.dir-locals.el` file you create.
+Keep in mind that if you set an option in your init file, it will be used in every CSV file you open, unless you override that setting in a `.dir-locals.el` file. This means that if you have settings that you want to apply to all CSV files, you can set them in your init file, instead of having to repeat them in every `.dir-locals.el` file you create.
