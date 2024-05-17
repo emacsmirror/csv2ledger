@@ -83,6 +83,7 @@
 This should point to a ledger file that defines the accounts.  It
 can be a separate file or a ledger file containing transactions."
   :type 'file
+  :safe #'stringp
   :group 'csv2ledger)
 
 (defcustom c2l-base-account "Assets:Checking"
@@ -92,6 +93,7 @@ The base ledger account is the ledger account associated with
 this bank account.  As such, it is the account that will turn up
 in every transaction read from the CSV file."
   :type 'file
+  :safe #'stringp
   :group 'csv2ledger)
 
 (defcustom c2l-fallback-account nil
@@ -102,6 +104,7 @@ target account for the transaction based on the matchers in
 of this variable is used.  If the value is unset, the user is
 asked for an account."
   :type 'string
+  :safe #'stringp
   :group 'csv2ledger)
 
 (defcustom c2l-account-holder nil
@@ -109,8 +112,10 @@ asked for an account."
 If the payee matches this regular expression, the sender is used
 instead of the payee as the title of the entry."
   :type 'string
+  :safe #'stringp
   :group 'csv2ledger)
 
+;;;###autoload (put 'c2l-csv-columns 'safe-local-variable '(lambda (v) (seq-every-p #'stringp v)))
 (defcustom c2l-csv-columns '()
   "List of columns in the CSV file.
 The data in the CSV file is extracted based on this list.  The
@@ -165,6 +170,8 @@ this option outside of Customize, make sure to call the function
   :set (lambda (var val)
          (c2l-compose-transaction-modifier val)
          (set-default var val))
+  :safe (lambda (v)
+          (seq-every-p #'symbolp v))
   :group 'csv2ledger)
 
 (defcustom c2l-field-modify-functions nil
@@ -182,6 +189,7 @@ This should be a function that takes an alist of field-value
 pairs and returns a string.  The string should be a formatted
 Ledger entry."
   :type 'function
+  :safe #'functionp
   :group 'csv2ledger)
 
 (defvar c2l-matcher-regexps nil
@@ -253,11 +261,13 @@ value of this option.  Therefore, if you set this option outside
 of Customize, make sure to also call the function
 `c2l-set-matcher-regexps'."
   :type 'file
-  :group 'csv2ledger
   :set (lambda (sym val)
          (set sym val)
-         (c2l-set-matcher-regexps val)))
+         (c2l-set-matcher-regexps val))
+  :safe #'stringp
+  :group 'csv2ledger)
 
+;;;###autoload (put 'c2l-target-match-fields 'safe-local-variable '(lambda (v) (seq-every-p #'stringp v)))
 (defcustom c2l-target-match-fields '(payee description)
   "List of fields used for determining the target account.
 Fields in this list are matched against the matchers in
@@ -271,6 +281,7 @@ returns a match is used as the target account."
   "If non-nil, mark every entry as cleared.
 This puts an asterisk between the date and the payee."
   :type 'boolean
+  :safe #'booleanp
   :group 'csv2ledger)
 
 (defcustom c2l-alignment-column 52
@@ -278,6 +289,7 @@ This puts an asterisk between the date and the payee."
 This should most likely be set to the same value as
 `ledger-post-amount-alignment-column'."
   :type 'integer
+  :safe #'integerp
   :group 'csv2ledger)
 
 (defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
