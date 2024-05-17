@@ -48,11 +48,11 @@
 ;; for each transaction for which `csv2ledger' could not find one and instead
 ;; prefer to correct the resulting ledger entries afterwards.
 ;;
-;; Normally, a ledger entry has the payee at the top of an entry, but if you
-;; receive money, your CSV file may list you as the payee.  To use the sender
-;; instead in such cases, set the variable `c2l-account-holder' to a regular
-;; expression matching your name (i.e., whatever appears as the payee in your
-;; CSV file when you receive money).
+;; Normally, a ledger entry starts with a date and the payee, but if you receive
+;; money, your CSV file may list you as the payee.  To use the sender instead in
+;; such cases, set the variable `c2l-account-holder' to a regular expression
+;; matching your name (i.e., whatever appears as the payee in your CSV file when
+;; you receive money).
 ;;
 ;; If you need to make any kind of changes to the data in your CSV file or wish
 ;; to customise the format of your ledger entries, look at the variables
