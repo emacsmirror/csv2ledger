@@ -246,7 +246,7 @@ How to set up directory-local variables is discussed in the Emacs manual (see th
 ((csv-mode . ((c2l-accounts-file . "~/Finances/Accounts.ledger")
               (c2l-account-matchers-file . "~/Finances/Account_matchers.tsv")
               (c2l-base-account . "Assets:Checking")
-              (c2l-fallback-account . "Expenses:Faalback")
+              (c2l-fallback-account . "Expenses:Fallback")
               (c2l-csv-columns . (date _ type description payee amount _))
               (c2l-auto-cleared . t))))
 ```
