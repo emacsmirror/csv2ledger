@@ -240,7 +240,7 @@ The function `c2l-compose-entry` requires that at least the `date`, `title`, `am
 
 If you have to deal with more than one bank, most likely the CSV files from those banks will be different and require different settings for the options discussed here. You can deal with this using directory-local variables.
 
-How to set up directory-local variables is discussed in the Emacs manual (see the Info node `(emacs) Directory Variables"`). As an example, you can create a `.dir-locals.el` file with the following content:
+How to set up directory-local variables is discussed in the Emacs manual (see the Info node `(emacs) Directory Variables`). As an example, you can create a `.dir-locals.el` file with the following content:
 
 ```
 ((csv-mode . ((c2l-accounts-file . "~/Finances/Accounts.ledger")
