@@ -41,7 +41,7 @@
 ;;
 ;; For more convenience, set up a file with account matchers and point the
 ;; variable `c2l-account-matchers-file' to it.  This will allow `csv2ledger' to
-;; try and find a target amount for each transaction automatically without user
+;; try and find a target account for each transaction automatically without user
 ;; intervention.  Also look at the variable `c2l-target-match-fields' to improve
 ;; account matching for your CSV files.  Additionally, you can set
 ;; `c2l-fallback-account' if you do not wish to be asked for a target account
@@ -193,7 +193,7 @@ Ledger entry."
   :group 'csv2ledger)
 
 (defvar c2l-matcher-regexps nil
-  "Alist of matcher regexps and their acounts.
+  "Alist of matcher regexps and their accounts.
 Each item should be a cons cell of a regular expression and an
 account name.  If the regular expression matches any of the
 fields in `c2l-target-match-fields', its corresponding account is
