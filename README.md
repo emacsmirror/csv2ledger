@@ -235,3 +235,24 @@ After all modification functions have been called, the resulting transaction is 
 
 The function `c2l-compose-entry` requires that at least the `date`, `title`, `amount` and `account` fields be present in the transaction. In addition, the fields `description` and `posted` are used if they are present. If you write your own custom function, that requirement no longer holds, of course. (In fact, there is not even a requirement that what the `c2l-entry-function` writes out is an actual ledger entry. You could have it convert CSV entries into JSON or YAML or whatever you like.)
 
+
+## Different banks, different CSV files ##
+
+If you have to deal with more than one bank, most likely the CSV files from those banks will be different and require different settings for the options discussed here. You can deal with this using directory-local variables.
+
+How to set up directory-local variables is discussed in the Emacs manual (see the Info node `(emacs) Directory Variables"`). As an example, you can create a `.dir-locals.el` file with the following content:
+
+```
+((csv-mode . ((c2l-accounts-file . "~/Finances/Accounts.ledger")
+              (c2l-account-matchers-file . "~/Finances/Account_matchers.tsv")
+              (c2l-base-account . "Assets:Checking")
+              (c2l-fallback-account . "Expenses:Faalback")
+              (c2l-csv-columns . (date _ type description payee amount _))
+              (c2l-auto-cleared . t))))
+```
+
+This will apply all listed `c2l` settings to all CSV files in the directory in containing the `.dir-locals.el` file. As long as you keep the CSV files from the two banks in different directories, you can use this strategy to set them up differently.
+
+If you prefer to keep your `csv2ledger` configuration in your init file, you can use the functions `dir-locals-set-directory-class` and `dir-locals-set-class-variables` to set up directory-local variables for specific directories. The Info node mentioned above explains how to do this.
+
+One (small) disadvantage of this approach is that some of the customisation options are considered unsafe or risky by Emacs, so when you open a CSV file, Emacs will ask you if you want to apply them. If you tell Emacs to apply them and set them as safe for future use, you'll only see that question once for a directory, however.
