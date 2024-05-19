@@ -131,7 +131,7 @@ The matchers are simple substrings, not regular expressions. I have not found th
 
 `c2l-matcher-regexps` is not a customisable option. However, if you set it to a value yourself, `csv2ledger` will not overwrite it (and ignore the value of `c2l-account-matchers-file` if it is set.). Just make sure that the value is set before calling any functions from `csv2ledger` (but after loading the library), and keep in mind that if you have multiple regexps matching a transaction, the first regexp that matches wins out.
 
-Matching an account specifically means matching the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-matcher-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well.
+Matching an account specifically means matching against the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-matcher-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well.
 
 As an example, I set `c2l-target-match-fields` to the value `(description payee sender type)`. Two things are of note here: first, the order of this list determines the order in which the fields get checked. The default value is `(payee description)`, so the `payee` field is checked before `description`. I prefer for the `description` field to be checked first, because in my case it tends to contain more information than the `payee` field, so in my setup, I put `description` first.
 
