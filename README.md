@@ -142,7 +142,8 @@ Note that if you wish, you can completely forego the account matching mechanism 
 
 ## Modifying field values ##
 
-Sometimes, it is useful or even necessary to modify the value of some field extracted from the CSV file, e.g., when dates or amounts do not appear in a format that Ledger can use. There are two ways that allow you to do so.
+Sometimes, it is useful or even necessary to modify the value of some field extracted from the CSV file, e.g., when dates or amounts do not appear in a format that Ledger can use. `csv2ledger` provides two ways of doing this: you can modify individual fields, which is fairly simple but also limited in some ways, or you can modify the entire transaction, which requires a bit more programming but is more powerful.
+
 
 ### Modifying individual fields ###
 
@@ -177,7 +178,7 @@ The setting for `c2l-field-modify-functions` then ends up like this:
     (amount . jk/c2l-convert-amount)))
 ```
 
-Another possible use of `c2l-field-modify-functions` is to make sure the value of the `debit` field is is a negative value. For example, if your CSV file lists amounts debit as `"€25.14"` instead of `"-€25.14"`, you can change this with the following setup:
+Another possible use of `c2l-field-modify-functions` is to make sure the value of the `debit` field is a negative value. For example, if your CSV file lists amounts debit as `"€25.14"` instead of `"-€25.14"`, you can change this with the following setup:
 
 ```emacs-lisp
 (setopt c2l-field-modify-functions
