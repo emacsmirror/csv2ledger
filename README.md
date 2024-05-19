@@ -47,11 +47,11 @@ Several customisation options are present. The full list with a short explanatio
 - `c2l-fallback-account` (`nil`) — Target account if one cannot be determined automatically.
 - `c2l-account-holder` (`nil`) — Name of the account holder that may appear as payee or sender.
 - `c2l-csv-columns` (`()`) — List describing the columns in the CSV file.
-- `c2l-transaction-modify-functions` (`'(c2l-create-title c2l-create-amount c2l-create-account)`) — Functions used to modify the transaction data.
 - `c2l-field-modify-functions` (`nil`) — Functions used to modify field values.
+- `c2l-transaction-modify-functions` (`'(c2l-create-title c2l-create-amount c2l-create-account)`) — Functions used to modify the transaction data.
 - `c2l-entry-function` (`c2l-compose-entry`) — Function used to create the actual ledger transaction.
 - `c2l-account-matchers-file` (`nil`) — File with substrings matching specific target accounts.
-- `c2l-target-match-fields` (`(payee description)`) — Fields in the transaction used to match against target accounts.
+- `c2l-target-match-fields` (`(payee description)`) — Fields in the transaction used to match against account targets in `c2l-account-matchers-file`.
 - `c2l-auto-cleared` (`nil`) — Whether to auto-clear transactions.
 - `c2l-alignment-column` (`52`) — Column to which the amount is aligned.
 
@@ -72,9 +72,9 @@ At the very least, you will need to set two user options: `c2l-base-account` and
 - `debit`: the amount payed
 - `_` (underscore): ignored column
 
-In the default setup, all these fields (except the underscore, obviously) may be used to create the Ledger entry, though some of them are only used in specific circumstances. Note that `c2l-csv-columns` should contain entries for *all* columns in the CSV file. Columns that you do not use should therefore be indicated with an underscore.
+In the default setup, all these fields (except the underscore, obviously) may be used to create the Ledger entry, though some of them are only used in specific circumstances or if certain other options have been set. Note that `c2l-csv-columns` should contain entries for *all* columns in the CSV file. Columns that you do not use should therefore be indicated with an underscore.
 
-The `payee` and `sender` columns never appear both. By default, `payee` is used as the title of the ledger entry and `sender` is ignored. If you set the option `c2l-account-holder` however, the `sender` will be used as the title for transactions in which you are the payee, i.e., when you receive money. If you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title (at least in the default setup).
+The `payee` and `sender` fields never appear both in the ledger entry. By default, `payee` is used as the title of the entry and `sender` is ignored. If you set the option `c2l-account-holder` however, the `sender` will be used as the title for transactions in which you are the payee, i.e., when you receive money. If you do not have a `sender` field in your CSV files, you may simply leave it out. In that case, the `payee` will always be used as the title (at least in the default setup).
 
 The `amount` field is intended for the CSV field that contains the amount of the transaction. If your CSV files have two separate columns for amounts credit and amounts debit, use the column names `credit` and `debit` instead. `csv2ledger` then checks for each transaction which one of those fields actually contains an amount and uses that to create the ledger entry. Note that in this case, it is assumed that the `debit` field contains a negative amount, i.e., that it has a minus sign. If that is not the case, you should make sure that it does. (How to do this is discussed below.)
 
