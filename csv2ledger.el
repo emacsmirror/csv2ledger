@@ -141,6 +141,15 @@ in the transaction.  They may be used in the option
   :type '(repeat symbol)
   :group 'csv2ledger)
 
+(defcustom c2l-field-modify-functions nil
+  "List of functions to modify fields in an entry.
+This option should be an alist mapping field names (as symbols)
+to functions.  These functions should take a single string
+argument and should return a string, which will be the value used
+for the field in question."
+  :type '(repeat (cons (symbol :tag "Field") function))
+  :group 'csv2ledger)
+
 (defvar c2l-transaction-modifier nil
   "The function that modifies a CSV transaction before creating a ledger entry.
 This is the composite function created with the functions in
@@ -172,15 +181,6 @@ this option outside of Customize, make sure to call the function
          (set-default var val))
   :safe (lambda (v)
           (seq-every-p #'symbolp v))
-  :group 'csv2ledger)
-
-(defcustom c2l-field-modify-functions nil
-  "List of functions to modify fields in an entry.
-This option should be an alist mapping field names (as symbols)
-to functions.  These functions should take a single string
-argument and should return a string, which will be the value used
-for the field in question."
-  :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
 (defcustom c2l-entry-function #'c2l-compose-entry
