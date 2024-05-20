@@ -122,7 +122,7 @@ restaurant    Expenses:Leisure:Restaurant
 
 Set the option `c2l-account-matchers-file` to point to this file. With the example matchers shown here, if the payee or description of a transaction contains the string `"aldi"`, `Expenses:Groceries` is taken as the balancing account. There can be more than one matcher for one account: in the example, both `"aldi"` and `"lidl"` link to the account `Expenses:Groceries`.
 
-The matchers are simple substrings, not regular expressions. I have not found the need to use regular expressions for account matching, and prefer the simplicity of not having to worry about the special meaning of certain characters in them. Internally, however, the matchers are turned into regular expressions and stored in the variable `c2l-matcher-regexps`. If you prefer to use regular expressions, you can set this variable yourself. Its value should be an alist mapping regular expressions to accounts:
+The matchers are simple substrings, not regular expressions. I have not found any need for regular expressions for account matching, and prefer the simplicity of simple substrings. Internally, however, the matchers are turned into regular expressions and stored in the variable `c2l-matcher-regexps`. If you prefer to use regular expressions, you can set this variable yourself. Its value should be an alist mapping regular expressions to accounts:
 
 ```emacs-lisp
 (setq c2l-matcher-regexps '(("\\(?:aldi\\|lidl\\)" . "Expenses:Groceries")
