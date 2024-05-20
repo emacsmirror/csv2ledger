@@ -150,38 +150,32 @@ for the field in question."
   :type '(repeat (cons (symbol :tag "Field") function))
   :group 'csv2ledger)
 
-(defvar c2l-transaction-modifier nil
+(defcustom c2l-transaction-modify-functions '(c2l-create-title c2l-create-amount c2l-create-account)
+  "List of functions applied to the transaction before creating an entry.
+The functions are applied in the order in which they appear in
+the list.  Each function should take an alist representing a
+transaction as argument and should return the modified
+transaction."
+  :type '(repeat function)
+  :safe (lambda (v)
+          (seq-every-p #'symbolp v))
+  :group 'csv2ledger)
+
+(defvar-local c2l-transaction-modifier nil
   "The function that modifies a CSV transaction before creating a ledger entry.
 This is the composite function created with the functions in
 `c2l-transaction-modify-functions'.")
 
-(defun c2l-compose-transaction-modifier (fns)
+(defun c2l-compose-transaction-modifier ()
   "Function to set the variable `c2l-transaction-modifier'.
 FNS is a list of functions, which is reversed and then composed
 into a single function taking a transaction alist as argument and
 returning a modified transaction alist."
   ;; Note: We need to reverse FNS, because `-compose' composes them from right
   ;; to left (i.e., the last function in FNS is applied first).
-  (setq c2l-transaction-modifier (apply #'-compose (reverse fns))))
+  (or c2l-transaction-modifier
+      (setq c2l-transaction-modifier (apply #'-compose (reverse c2l-transaction-modify-functions)))))
 
-(defcustom c2l-transaction-modify-functions '(c2l-create-title c2l-create-amount c2l-create-account)
-  "List of functions applied to the transaction before creating an entry.
-The functions are applied in the order in which they appear in
-the list.  Each function should take an alist representing a
-transaction as argument and should return the modified
-transaction.
-
-These functions are composed into a single function which is then
-stored in the variable `c2l-transaction-modifier'.  If you set
-this option outside of Customize, make sure to call the function
-`c2l-compose-transaction-modifier' as well."
-  :type '(repeat function)
-  :set (lambda (var val)
-         (c2l-compose-transaction-modifier val)
-         (set-default var val))
-  :safe (lambda (v)
-          (seq-every-p #'symbolp v))
-  :group 'csv2ledger)
 
 (defcustom c2l-entry-function #'c2l-compose-entry
   "Function to create a ledger entry.
@@ -220,26 +214,6 @@ See the documentation for the variable
             accounts))
       (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
 
-(defun c2l--compile-matcher-regexps (accounts)
-  "Create efficient regular expressions for the matchers in ACCOUNTS.
-ACCOUNTS is a list of (<matcher> . <account>) conses, where
-<matcher> should be unique but <account> may occur multiple
-times.  Return value is an alist in which each account in
-ACCOUNTS is mapped to a regular expression matching all matchers
-for that account."
-  (mapcar (lambda (e)
-            (cons (regexp-opt (mapcar #'car (cdr e)))
-                  (car e)))
-          (seq-group-by #'cdr accounts)))
-
-(defun c2l-set-matcher-regexps (val)
-  "Set `c2l-matcher-regexps' based on VAL, unless it already has a value."
-  (unless c2l-matcher-regexps
-    (setq c2l-matcher-regexps
-          (-> val
-              (c2l--read-account-matchers)
-              (c2l--compile-matcher-regexps)))))
-
 (defcustom c2l-account-matchers-file nil
   "File containing matcher strings mapped to accounts.
 This should be a TSV (tab-separated values) file containing one
@@ -254,18 +228,30 @@ where the two columns are separated by a TAB.
 The matcher is a string (not a regular expression).  If a matcher
 is found in any of the fields listed in the option
 `c2l-target-match-fields', the corresponding account is used to
-book the transaction.
-
-Note that the variable `c2l-matcher-regexps' is set based on the
-value of this option.  Therefore, if you set this option outside
-of Customize, make sure to also call the function
-`c2l-set-matcher-regexps'."
+book the transaction."
   :type 'file
-  :set (lambda (sym val)
-         (set sym val)
-         (c2l-set-matcher-regexps val))
   :safe #'stringp
   :group 'csv2ledger)
+
+(defun c2l--compile-matcher-regexps (accounts)
+  "Create efficient regular expressions for the matchers in ACCOUNTS.
+ACCOUNTS is a list of (<matcher> . <account>) conses, where
+<matcher> should be unique but <account> may occur multiple
+times.  Return value is an alist in which each account in
+ACCOUNTS is mapped to a regular expression matching all matchers
+for that account."
+  (mapcar (lambda (e)
+            (cons (regexp-opt (mapcar #'car (cdr e)))
+                  (car e)))
+          (seq-group-by #'cdr accounts)))
+
+(defun c2l-set-matcher-regexps ()
+  "Set `c2l-matcher-regexps' based on VAL, unless it already has a value."
+  (unless c2l-matcher-regexps
+    (setq-local c2l-matcher-regexps
+                (-> c2l-account-matchers-file
+                    (c2l--read-account-matchers)
+                    (c2l--compile-matcher-regexps)))))
 
 ;;;###autoload (put 'c2l-target-match-fields 'safe-local-variable '(lambda (v) (seq-every-p #'stringp v)))
 (defcustom c2l-target-match-fields '(payee description)
@@ -292,7 +278,7 @@ This should most likely be set to the same value as
   :safe #'integerp
   :group 'csv2ledger)
 
-(defvar c2l--accounts nil "List of ledger accounts, mainly used for completion.")
+(defvar-local c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--results-buffer nil "Buffer for conversion results.")
 
 ;;; Functions for use as values of customisation options.
@@ -400,7 +386,7 @@ cleared, even if there is no value for `posted' in TRANSACTION."
   "Try to match STR to an account."
   (--some (if (string-match-p (car it) str)
               (cdr it))
-          c2l-matcher-regexps))
+          (c2l-set-matcher-regexps)))
 
 (defun c2l--csv-line-to-ledger (transaction)
   "Convert TRANSACTION to a ledger entry.
@@ -422,7 +408,7 @@ TRANSACTION and then passes the transaction through
                                       (cons field
                                             (funcall (alist-get field c2l-field-modify-functions #'identity) value))))
                                   transaction))
-         (modified-transaction (funcall c2l-transaction-modifier modified-fields)))
+         (modified-transaction (funcall (c2l-compose-transaction-modifier) modified-fields)))
     (funcall c2l-entry-function modified-transaction)))
 
 (defun c2l--get-current-row ()
