@@ -7,7 +7,7 @@
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
 ;; Version: 1.0
-;; Package-Requires: ((emacs "29.1") (csv-mode) (parse-csv) (dash "2.19.1"))
+;; Package-Requires: ((emacs "29.1") (csv-mode) (parse-csv))
 ;; URL: https://codeberg.org/joostkremers/csv2ledger
 
 ;; This file is NOT part of GNU Emacs.
@@ -71,7 +71,6 @@
 (require 'subr-x)
 (require 'parse-csv)
 (require 'csv-mode)
-(require 'dash)
 
 (defgroup csv2ledger nil
   "Csv2Ledger: Converting csv files to ledger entries."
@@ -155,7 +154,12 @@ for the field in question."
 The functions are applied in the order in which they appear in
 the list.  Each function should take an alist representing a
 transaction as argument and should return the modified
-transaction."
+transaction.
+
+These functions are composed into a single function which is then
+stored in the variable `c2l-transaction-modifier'.  If you set
+this option outside of Customize, make sure to call the function
+`c2l-compose-transaction-modifier' as well."
   :type '(repeat function)
   :safe (lambda (v)
           (seq-every-p #'symbolp v))
@@ -167,15 +171,11 @@ This is the composite function created with the functions in
 `c2l-transaction-modify-functions'.")
 
 (defun c2l-compose-transaction-modifier ()
-  "Function to set the variable `c2l-transaction-modifier'.
-FNS is a list of functions, which is reversed and then composed
-into a single function taking a transaction alist as argument and
-returning a modified transaction alist."
-  ;; Note: We need to reverse FNS, because `-compose' composes them from right
-  ;; to left (i.e., the last function in FNS is applied first).
+  "Function to set the variable `c2l-transaction-modifier'."
   (or c2l-transaction-modifier
-      (setq c2l-transaction-modifier (apply #'-compose (reverse c2l-transaction-modify-functions)))))
-
+      (setq c2l-transaction-modifier (lambda (acc)
+                                       (dolist (fn c2l-transaction-modify-functions acc)
+                                         (setq acc (funcall fn acc)))))))
 
 (defcustom c2l-entry-function #'c2l-compose-entry
   "Function to create a ledger entry.
@@ -184,6 +184,25 @@ pairs and returns a string.  The string should be a formatted
 Ledger entry."
   :type 'function
   :safe #'functionp
+  :group 'csv2ledger)
+
+(defcustom c2l-account-matchers-file nil
+  "File containing matcher strings mapped to accounts.
+This should be a TSV (tab-separated values) file containing one
+matcher per line:
+
+aldi          Expenses:Groceries
+lidl          Expenses:Groceries
+restaurant    Expenses:Leisure:Restaurant
+
+where the two columns are separated by a TAB.
+
+The matcher is a string (not a regular expression).  If a matcher
+is found in any of the fields listed in the option
+`c2l-target-match-fields', the corresponding account is used to
+book the transaction."
+  :type 'file
+  :safe #'stringp
   :group 'csv2ledger)
 
 (defvar c2l-matcher-regexps nil
@@ -214,25 +233,6 @@ See the documentation for the variable
             accounts))
       (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
 
-(defcustom c2l-account-matchers-file nil
-  "File containing matcher strings mapped to accounts.
-This should be a TSV (tab-separated values) file containing one
-matcher per line:
-
-aldi          Expenses:Groceries
-lidl          Expenses:Groceries
-restaurant    Expenses:Leisure:Restaurant
-
-where the two columns are separated by a TAB.
-
-The matcher is a string (not a regular expression).  If a matcher
-is found in any of the fields listed in the option
-`c2l-target-match-fields', the corresponding account is used to
-book the transaction."
-  :type 'file
-  :safe #'stringp
-  :group 'csv2ledger)
-
 (defun c2l--compile-matcher-regexps (accounts)
   "Create efficient regular expressions for the matchers in ACCOUNTS.
 ACCOUNTS is a list of (<matcher> . <account>) conses, where
@@ -246,12 +246,14 @@ for that account."
           (seq-group-by #'cdr accounts)))
 
 (defun c2l-set-matcher-regexps ()
-  "Set `c2l-matcher-regexps' based on VAL, unless it already has a value."
-  (unless c2l-matcher-regexps
-    (setq-local c2l-matcher-regexps
-                (-> c2l-account-matchers-file
-                    (c2l--read-account-matchers)
-                    (c2l--compile-matcher-regexps)))))
+  "Set `c2l-matcher-regexps' based on the file in `c2l-account-matchers-file'.
+If `c2l-matcher-regexps' already has a value, do not change it.
+Return the (new) value of `c2l-matcher-regexps'."
+  (or c2l-matcher-regexps
+      (setq-local c2l-matcher-regexps
+                  (thread-first c2l-account-matchers-file
+                                (c2l--read-account-matchers)
+                                (c2l--compile-matcher-regexps)))))
 
 ;;;###autoload (put 'c2l-target-match-fields 'safe-local-variable '(lambda (v) (seq-every-p #'stringp v)))
 (defcustom c2l-target-match-fields '(payee description)
@@ -328,10 +330,10 @@ Return the modified transaction."
 
 (defun c2l-create-account (transaction)
   "Create the account for TRANSACTION."
-  (let ((account (or (-some #'c2l--match-account
-                            (mapcar #'cdr
-                                    (--filter (memq (car it) c2l-target-match-fields)
-                                              transaction)))
+  (let ((account (or (seq-some #'c2l--match-account
+                               (mapcar #'cdr
+                                       (seq-filter (lambda (e) (memq (car e) c2l-target-match-fields))
+                                                   transaction)))
                      c2l-fallback-account
                      (completing-read (format "Account for transaction %s, %s «%.75s» "
                                               (alist-get 'title transaction "Unknown payee")
@@ -384,9 +386,10 @@ cleared, even if there is no value for `posted' in TRANSACTION."
 
 (defun c2l--match-account (str)
   "Try to match STR to an account."
-  (--some (if (string-match-p (car it) str)
-              (cdr it))
-          (c2l-set-matcher-regexps)))
+  (seq-some (lambda (e)
+              (if (string-match-p (car e) str)
+                  (cdr e)))
+            (c2l-set-matcher-regexps)))
 
 (defun c2l--csv-line-to-ledger (transaction)
   "Convert TRANSACTION to a ledger entry.
@@ -420,7 +423,8 @@ names are taken from `c2l-csv-columns'."
              (quote-char (string-to-char (or (car csv-field-quotes) "")))
              (line (buffer-substring-no-properties (pos-bol) (pos-eol)))
              (row (parse-csv-string line separator quote-char)))
-        (--remove (eq (car it) '_) (-zip-pair c2l-csv-columns row)))
+        (seq-remove (lambda (e) (eq (car e) '_))
+                    (seq-mapn #'cons c2l-csv-columns row)))
     (user-error "Cannot interpret CSV data; set `c2l-csv-columns' first")))
 
 (defun c2l--has-header ()

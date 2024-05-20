@@ -35,7 +35,7 @@ If you have this information in your CSV file, you can use it and add it to the 
 
 For the moment, `csv2ledger` needs to be installed manually. Put the file `csv2ledger.el` in your load path, byte-compile it if you wish, and `require` it in your init file.
 
-Make sure to install the dependencies as well: `csv-mode` from GNU ELPA, `dash` from GNU ELPA or MELPA, and `parse-csv` from MELPA. Note that for `csv2ledger` to work properly, CSV files must be opened in buffers with `csv-mode` as the major mode. This should work automatically after installing the `csv-mode` package, but if you have issues, make sure to check this.
+Make sure to install the dependencies as well: `csv-mode` from GNU ELPA, and `parse-csv` from MELPA. Note that for `csv2ledger` to work properly, CSV files must be opened in buffers with `csv-mode` as the major mode. This should work automatically after installing the `csv-mode` package, but if you have issues, make sure to check this.
 
 
 ## Customisation ##
