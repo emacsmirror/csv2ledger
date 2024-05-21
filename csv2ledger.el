@@ -435,9 +435,9 @@ one of these contains something that looks like an amount."
   (save-mark-and-excursion
     (goto-char (point-min))
     (let* ((transaction (c2l--get-current-row)))
-      (not (or (c2l--amount-p (alist-get 'amount transaction ""))
-               (c2l--amount-p (alist-get 'credit transaction ""))
-               (c2l--amount-p (alist-get 'debit transaction "")))))))
+      (not (seq-some (lambda (field)
+                       (c2l--amount-p (alist-get field transaction "")))
+                     '(amount credit debit))))))
 
 (defun c2l--get-results-buffer ()
   "Create a results buffer for conversion.
