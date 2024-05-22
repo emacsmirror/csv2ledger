@@ -229,7 +229,7 @@ See the documentation for the variable
                     (account (match-string 2)))
                 (push (cons matcher account) accounts))
               (forward-line 1))
-            accounts))
+            (nreverse accounts)))
       (user-error "[Csv2Ledger] Account matcher file `%s' not found" file))))
 
 (defun c2l--compile-matcher-regexps (accounts)
