@@ -7,7 +7,7 @@
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
 ;; Version: 1.1
-;; Package-Requires: ((emacs "29.1") (csv-mode) (parse-csv))
+;; Package-Requires: ((emacs "29.1") ((csv-mode "1.24")))
 ;; URL: https://codeberg.org/joostkremers/csv2ledger
 
 ;; This file is NOT part of GNU Emacs.
@@ -69,7 +69,6 @@
 ;;; Code:
 
 (require 'subr-x)
-(require 'parse-csv)
 (require 'csv-mode)
 
 (defgroup csv2ledger nil
@@ -419,10 +418,7 @@ TRANSACTION and then passes the transaction through
 Return value is an alist of field-value pairs, where the field
 names are taken from `c2l-csv-columns'."
   (if c2l-csv-columns
-      (let* ((separator (car csv-separator-chars))
-             (quote-char (string-to-char (or (car csv-field-quotes) "")))
-             (line (buffer-substring-no-properties (pos-bol) (pos-eol)))
-             (row (parse-csv-string line separator quote-char)))
+      (let ((row (csv-parse-current-row)))
         (seq-remove (lambda (e) (eq (car e) '_))
                     (seq-mapn #'cons c2l-csv-columns row)))
     (user-error "Cannot interpret CSV data; set `c2l-csv-columns' first")))
