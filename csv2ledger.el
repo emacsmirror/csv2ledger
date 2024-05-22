@@ -342,13 +342,6 @@ Return the modified transaction."
     (push (cons 'account account) transaction)
     transaction))
 
-;;; Helper functions
-
-(defun c2l--amount-p (str)
-  "Return non-nil if STR is likely to be an amount."
-  (if (string-match-p "[0-9]+[0-9.,]*\\(?:[.,][0-9]\\{2\\}\\)?" str)
-      str))
-
 (defun c2l-compose-entry (transaction)
   "Create a ledger entry.
 TRANSACTION is an alist containing (key . value) pairs that will
@@ -367,6 +360,13 @@ cleared, even if there is no value for `posted' in TRANSACTION."
             (format "    %s  " c2l-base-account)
             (make-string (- c2l-alignment-column 4 (length c2l-base-account) 2 (length .amount)) ?\s)
             .amount "\n")))
+
+;;; Helper functions
+
+(defun c2l--amount-p (str)
+  "Return non-nil if STR is likely to be an amount."
+  (if (string-match-p "[0-9]+[0-9.,]*\\(?:[.,][0-9]\\{2\\}\\)?" str)
+      str))
 
 (defun c2l--read-accounts (file)
   "Read list of accounts from FILE."
