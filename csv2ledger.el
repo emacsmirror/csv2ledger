@@ -328,7 +328,10 @@ Return the modified transaction."
   transaction)
 
 (defun c2l-create-account (transaction)
-  "Create the account for TRANSACTION."
+  "Get the balancing account for TRANSACTION.
+First check if the account matchers provide a balancing account.
+If not, use `c2l-fallback-account' if provided.  If neither
+method yields an account, ask the user."
   (let ((account (or (seq-some #'c2l--match-account
                                (mapcar #'cdr
                                        (seq-filter (lambda (e) (memq (car e) c2l-target-match-fields))
