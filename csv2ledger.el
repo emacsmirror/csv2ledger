@@ -421,7 +421,7 @@ names are taken from `c2l-csv-columns'."
       (let ((row (csv-parse-current-row)))
         (seq-remove (lambda (e) (eq (car e) '_))
                     (seq-mapn #'cons c2l-csv-columns row)))
-    (user-error "Cannot interpret CSV data; set `c2l-csv-columns' first")))
+    (user-error "[Csv2Ledger] Cannot interpret CSV data; set `c2l-csv-columns' first")))
 
 (defun c2l--has-header ()
   "Return non-nil if the current CSV buffer appears to have a header.
