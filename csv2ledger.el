@@ -345,6 +345,46 @@ method yields an account, ask the user."
     (push (cons 'account account) transaction)
     transaction))
 
+(defun c2l-create-account-ask-matcher (transaction)
+  "Get the balancing account for TRANSACTION.
+First check if the account matchers provide a balancing account.
+If not, ask the user for an account and ask if they want to
+create an account matcher for it."
+  (let ((account (seq-some #'c2l--match-account
+                           (mapcar #'cdr
+                                   (seq-filter (lambda (e) (memq (car e) c2l-target-match-fields))
+                                               transaction)))))
+    (when (not account)
+      (setq account (completing-read (format "Account for transaction %s, %s «%.75s» "
+                                             (alist-get 'title transaction "Unknown payee")
+                                             (alist-get 'amount transaction "0.00")
+                                             (alist-get 'description transaction "?"))
+                                     c2l--accounts))
+      (if (y-or-n-p "Add a matcher for this account? ")
+          ;; If the user changes their mind, we still want to continue
+          ;; processing the transaction, so we capture quit.
+          (condition-case nil
+              (let ((matcher (read-string (format "Matcher for «%s»: " account))))
+                (when (and matcher (not (string-empty-p matcher)))
+                  (c2l-add-matcher matcher account c2l-account-matchers-file)
+                  (push (cons (regexp-opt (list matcher)) account) c2l-matcher-regexps)))
+            (quit nil))))
+    (push (cons 'account account) transaction)
+    transaction))
+
+(defun c2l-add-matcher (matcher account file)
+  "Add MATCHER to FILE.
+MATCHER will be linked to ACCOUNT."
+  (if (not (and (stringp file)
+                (file-writable-p file)))
+      (user-error "[Csv2Ledger] Cannot write to account matchers file `%s'" file)
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-max))
+      (ensure-empty-lines 0)            ; Make sure we're on a new, empty line.
+      (insert (format "%s\t%s\n" matcher account))
+      (write-region (point-min) (point-max) file))))
+
 (defun c2l-compose-entry (transaction)
   "Create a ledger entry.
 TRANSACTION is an alist containing (key . value) pairs that will

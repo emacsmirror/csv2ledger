@@ -229,6 +229,10 @@ Another important point to note is that the amount in the `amount` field must be
 
 The third function in `c2l-transaction-modify-functions` is `c2l-create-account`. This is the function that checks the fields of the transaction against the account matchers, and if one is not found, uses `c2l-fallback-account` or asks the user. If you wish to use a different method to set the account, you can replace this function with a custom one. It needs to add an `account` field to the transaction, but there are no restrictions on how the account is determined.
 
+`csv2ledger` provides an alternative function for creating an account: `c2l-create-account-ask-matcher`. It also checks the transaction against the account matchers, but if no match is found, `c2l-fallback-account` is not used. Instead, you are asked for an account and also whether you want to add a matcher for it. If you say yes, you are asked to provide a string to match against. The new matcher is added to your account matchers file and is also immediately available for further transactions in the CSV file you are processing.
+
+If you want to use this function, remove `c2l-create-account` from `c2l-transaction-modify-functions` and replace it with `c2l-create-account-ask-matcher` to it.
+
 
 ### Creating the entry ###
 
