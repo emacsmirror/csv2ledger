@@ -6,7 +6,7 @@
 ;; Author: Joost Kremers <joostkremers@fastmail.fm>
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
-;; Version: 1.3
+;; Version: 1.4
 ;; Package-Requires: ((emacs "29.1") ((csv-mode "1.24")))
 ;; URL: https://codeberg.org/joostkremers/csv2ledger
 
