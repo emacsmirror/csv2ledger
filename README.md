@@ -28,7 +28,7 @@ Not indicated in the above example is the *effective* date (also called *posted*
     Assets:Checking                                          -€25.10
 ```
 
-If you have this information in your CSV file, you can use it and add it to the entry. If such an effective date is found, the entry is also marked as cleared, i.e., an asterisk appears between the date and the title.
+If you have this information in your CSV file, you can use it and add it to the entry.
 
 
 ## Installation ##

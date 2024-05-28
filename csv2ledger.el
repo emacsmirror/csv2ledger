@@ -265,10 +265,11 @@ returns a match is used as the target account."
   :group 'csv2ledger)
 
 (defcustom c2l-auto-cleared nil
-  "If non-nil, mark every entry as cleared.
-This puts an asterisk between the date and the payee."
-  :type 'boolean
-  :safe #'booleanp
+  "If non-nil, mark every transaction as cleared."
+  :type '(choice (const :tag "Never auto-clear transactions" nil)
+                 (const :tag "Always auto-clear transactions" t)
+                 (const :tag "Auto-clear if effective date is present" if-posted))
+  :safe #'symbolp
   :group 'csv2ledger)
 
 (defcustom c2l-alignment-column 52
@@ -392,17 +393,17 @@ be included in the entry.  It should at least contain values for
 the keys `date', `title', `amount' and `account'.  TRANSACTION
 may also contain a value for `posted' and `description'.  If
 `posted' is present, it is added as the effective date for the
-entry and the entry is marked as cleared.  If `description' is
-present, it is added as a comment, preceded by \"Desc:\".  If
-`c2l-auto-cleared' is non-nil, the entry is always marked as
-cleared, even if there is no value for `posted' in TRANSACTION."
+entry.  If `description' is present, it is added as a comment,
+preceded by \"Desc:\".  If `c2l-auto-cleared' is non-nil, the
+entry is marked as cleared."
   (let-alist transaction
-    (concat .date (if .posted (format "=%s " .posted) "") (if (or .posted c2l-auto-cleared) " *" "") " " .title "\n"
-            (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
-            (format "    %s\n" .account)
-            (format "    %s  " c2l-base-account)
-            (make-string (- c2l-alignment-column 4 (length c2l-base-account) 2 (length .amount)) ?\s)
-            .amount "\n")))
+    (let ((cleared (if (eq c2l-auto-cleared 'if-posted) .posted c2l-auto-cleared)))
+      (concat .date (if .posted (format "=%s" .posted) "") (if cleared " * " " ") .title "\n"
+              (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
+              (format "    %s\n" .account)
+              (format "    %s  " c2l-base-account)
+              (make-string (- c2l-alignment-column 4 (length c2l-base-account) 2 (length .amount)) ?\s)
+              .amount "\n"))))
 
 ;;; Helper functions
 
