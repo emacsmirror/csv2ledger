@@ -437,17 +437,11 @@ entry is marked as cleared."
 (defun c2l--csv-line-to-ledger (transaction)
   "Convert TRANSACTION to a ledger entry.
 TRANSACTION is an alist containing the data of the transaction.
-The transaction is booked to the account in `c2l-base-account'.
-The target account is determined on the basis of the matchers in
-`c2l-account-matchers-file'.  If none is found, the value of
-`c2l-fallback-account' is used.  If that option is unset, the
-user is asked for an account.
-
 This function first applies the functions in
 `c2l-field-modify-functions' to the individual fields of
 TRANSACTION and then passes the transaction through
 `c2l-transaction-modify-functions' before calling
-`c2l-entry-function' to create the actual entry."
+`c2l-entry-function' to create the actual entry as a string."
   (let* ((modified-fields (mapcar (lambda (item)
                                     (let ((field (car item))
                                           (value (cdr item)))
