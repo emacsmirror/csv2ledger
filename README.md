@@ -147,7 +147,7 @@ Sometimes, it is useful or even necessary to modify the value of some field extr
 
 ### Modifying individual fields ###
 
-First, there is the option `c2l-field-modify-functions`. You can use this option to adjust the value of particular fields. As an example, my CSV files provide the date in the format `DD.MM.YYYY`, but ledger expects them to be in the format `YYYY-MM-DD`. To remedy this, `csv2ledger` comes with the function `c2l-convert-little-endian-to-iso8601-date` that takes a date in the format `DD.MM.YYYY` and converts it to `YYYY-MM-DD`. For convenience, it also accepts dates in the forms `DD-MM-YYYY` and `DD/MM/YYYY`.
+First, there is the option `c2l-field-modify-functions`. You can use this option to adjust the value of particular fields. As an example, my CSV files provide the date in the format `DD.MM.YYYY`, but in my ledger files I use the format `YYYY-MM-DD`. To remedy this, `csv2ledger` comes with the function `c2l-convert-little-endian-to-iso8601-date` that takes a date in the format `DD.MM.YYYY` and converts it to `YYYY-MM-DD`. For convenience, it also accepts dates in the forms `DD-MM-YYYY` and `DD/MM/YYYY`.
 
 `c2l-field-modify-functions` is an alist mapping field names to functions. Each function should take a string as its only argument and return a string. They are called with the field's value as argument and the return value replaces the original value in the transaction. So in order to transform the date as described, I set `c2l-field-modify-functions` as follows:
 
