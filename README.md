@@ -162,12 +162,15 @@ Since this is a very particular conversion, there is no function for it included
 
 ```emacs-lisp
 (defun jk/c2l-convert-amount (amount)
-  "Convert AMOUNT from the format \"-3.150,20 €\" to \"-€3150.20\"."
-  (string-match "\\(-\\)?\\([[:digit:].]+\\)\\(?:,\\([[:digit:]]\\{2\\}\\)\\)?" amount)
+  "Convert AMOUNT from the format \"-3.150,20 €\" to \"-€3150.20\".
+This also handles cases such as \"300\" and \"8,7\"."
+  (string-match "\\(-\\)?\\([[:digit:].]+\\(?:,[[:digit:]]\\{2\\}\\)?\\)" amount)
   (let ((sign (or (match-string 1 amount) ""))
-        (euros (string-replace "." "" (match-string 2 amount)))
-        (cents (or (match-string 3 amount) "00")))
-    (concat sign "€" euros "." cents)))
+        (amount (thread-last (match-string 2 amount)
+                             (string-replace "." "")
+                             (string-replace "," ".")
+                             string-to-number)))
+    (format "%s€%.2f" sign amount)))
 ```
 
 The setting for `c2l-field-modify-functions` then ends up like this:
