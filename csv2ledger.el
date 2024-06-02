@@ -6,8 +6,8 @@
 ;; Author: Joost Kremers <joostkremers@fastmail.fm>
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
-;; Version: 1.5.1
-;; Package-Requires: ((emacs "29.1") ((csv-mode "1.24")))
+;; Version: 1.5.2
+;; Package-Requires: ((emacs "29.1") (csv-mode "1.24"))
 ;; URL: https://codeberg.org/joostkremers/csv2ledger
 
 ;; This file is NOT part of GNU Emacs.
