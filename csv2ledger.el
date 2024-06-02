@@ -323,8 +323,8 @@ Return the modified transaction."
   "Create the amount for TRANSACTION.
 Return the modified transaction."
   (unless (c2l--amount-p (alist-get 'amount transaction ""))
-    (let ((amount (or (c2l--amount-p (alist-get  'credit transaction ""))
-                      (c2l--amount-p (alist-get  'debit transaction ""))
+    (let ((amount (or (c2l--amount-p (alist-get 'credit transaction ""))
+                      (c2l--amount-p (alist-get 'debit transaction ""))
                       "0.00")))
       (if (alist-get 'amount transaction)
           (setf (alist-get 'amount transaction) amount)
