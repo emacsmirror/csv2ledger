@@ -502,7 +502,9 @@ new buffer is created."
 
 (defun c2l-read-account-matchers ()
   "(Re)read the account matchers file."
-  (c2l-set-matcher-regexps 'force))
+  (interactive)
+  (c2l-set-matcher-regexps 'force)
+  (message "[Csv2Ledger] Reading account matchers file... Done."))
 
 ;;;###autoload
 (defun c2l-csv-entry-as-kill ()
