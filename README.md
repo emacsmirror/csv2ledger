@@ -133,9 +133,10 @@ The matchers are simple substrings, not regular expressions. I have not found an
 
 Matching an account specifically means matching against the values of the fields listed in `c2l-target-match-fields` against the regexps in `c2l-matcher-regexps`. The first regexp that matches wins. By default, `c2l-target-match-fields` only contains the `payee` and `description` fields, but you can add other fields to it as well.
 
-As an example, I set `c2l-target-match-fields` to the value `(description payee sender type)`. Two things are of note here: first, the order of this list determines the order in which the fields get checked. The default value is `(payee description)`, so the `payee` field is checked before `description`. I prefer for the `description` field to be checked first, because in my case it tends to contain more information than the `payee` field, so in my setup, I put `description` first.
+As an example, I set `c2l-target-match-fields` to the value `(description payee sender type)`. Two things are of note here: first, the order of this list determines the order in which the fields get checked. The default value is `(payee description)`, so the `payee` field is checked before `description`. I prefer for the `description` field to be checked first, because in my case it tends to contain more information than the `payee` field. Second, I add the `type` field to the list. As already mentioned, `csv2ledger` does not do anything with this field, but I include it in `c2l-csv-columns` and I use it here to match the target account. Specifically, I use it to capture ATM withdrawals and set the target account to `Assets:Cash`.
 
-Second, I add the `type` field to the list. As already mentioned, `csv2ledger` does not do anything with this field, but I include it in `c2l-csv-columns` and I use it here to match the target account. Specifically, I use it to capture ATM withdrawals and set the target account to `Assets:Cash`.
+Keep in mind that `csv2ledger` reads the account matchers file when you open a CSV file. Therefore, if you add new entries to it, they won't be available for conversion. To make them available, do `M-x c2l-read-account-matchers` to make `csv2ledger` re-read the account matchers.
+
 
 Note that if you wish, you can completely forego the account matching mechanism discussed here and write your own function to find a target account. This is explained in a bit more detail below.
 
