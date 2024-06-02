@@ -214,7 +214,7 @@ used as the target account.
 This variable is normally given a value based on the matchers in
 `c2l-account-matchers-file', but it can also be set directly.")
 
-(defun c2l--read-account-matchers (file)
+(defun c2l--read-account-matchers-file (file)
   "Read account matchers from FILE.
 See the documentation for the variable
 `c2l-account-matchers-file' for details on the matcher file."
@@ -244,15 +244,18 @@ for that account."
                   (car e)))
           (seq-group-by #'cdr accounts)))
 
-(defun c2l-set-matcher-regexps ()
+(defun c2l-set-matcher-regexps (&optional force)
   "Set `c2l-matcher-regexps' based on the file in `c2l-account-matchers-file'.
-If `c2l-matcher-regexps' already has a value, do not change it.
-Return the (new) value of `c2l-matcher-regexps'."
-  (or c2l-matcher-regexps
-      (setq-local c2l-matcher-regexps
-                  (thread-first c2l-account-matchers-file
-                                (c2l--read-account-matchers)
-                                (c2l--compile-matcher-regexps)))))
+If `c2l-matcher-regexps' already has a value, do not change it,
+unless FORCE is non-nil.  Return the (new) value of
+`c2l-matcher-regexps'."
+  (when (or force
+            c2l-matcher-regexps)
+    (setq-local c2l-matcher-regexps
+                (thread-first c2l-account-matchers-file
+                              (c2l--read-account-matchers-file)
+                              (c2l--compile-matcher-regexps))))
+  c2l-matcher-regexps)
 
 ;;;###autoload (put 'c2l-target-match-fields 'safe-local-variable '(lambda (v) (seq-every-p #'stringp v)))
 (defcustom c2l-target-match-fields '(payee description)
@@ -496,6 +499,10 @@ new buffer is created."
   (unless c2l--accounts
     (setq c2l--accounts (c2l--read-accounts c2l-accounts-file)))
   (setq c2l-base-account (completing-read "Base account for current buffer: " c2l--accounts)))
+
+(defun c2l-read-account-matchers ()
+  "(Re)read the account matchers file."
+  (c2l-set-matcher-regexps 'force))
 
 ;;;###autoload
 (defun c2l-csv-entry-as-kill ()
