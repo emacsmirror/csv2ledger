@@ -250,7 +250,7 @@ If `c2l-matcher-regexps' already has a value, do not change it,
 unless FORCE is non-nil.  Return the (new) value of
 `c2l-matcher-regexps'."
   (when (or force
-            c2l-matcher-regexps)
+            (not c2l-matcher-regexps))
     (setq-local c2l-matcher-regexps
                 (thread-first c2l-account-matchers-file
                               (c2l--read-account-matchers-file)
