@@ -6,7 +6,7 @@
 ;; Author: Joost Kremers <joostkremers@fastmail.fm>
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
-;; Version: 1.5.3
+;; Version: 1.5.4
 ;; Package-Requires: ((emacs "29.1") (csv-mode "1.24"))
 ;; URL: https://codeberg.org/joostkremers/csv2ledger
 
@@ -516,7 +516,7 @@ in `c2l-csv-columns'."
     (setq c2l--accounts (c2l--read-accounts c2l-accounts-file)))
   (let ((entry (c2l--csv-line-to-ledger (c2l--get-current-row))))
     (kill-new entry)
-    (message entry)))
+    (message "%s" entry)))
 
 ;;;###autoload
 (defun c2l-convert-region (start end)
