@@ -68,7 +68,6 @@
 
 ;;; Code:
 
-(require 'subr-x)
 (require 'csv-mode)
 
 (defgroup csv2ledger nil
