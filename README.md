@@ -128,9 +128,9 @@ In order to convert an entry, `csv2ledger` needs to know which account to use as
 
 If no target account is found this way, you will be asked for the target account in the minibuffer. If you have defined your accounts in your ledger file (or in a file imported in your ledger file), you can point the option `c2l-accounts-file` to it and Emacs will provide those accounts as completion candidates.
 
-If you prefer not to be asked for each unrecognised transaction, you can set the option `c2l-fallback-account` to an account that will be used instead, e.g., `Expenses:Miscellaneous` or `Expenses:Fallback`. Note that this does not have to be an actual account. Rather, it should be something that you can easily search for in the ledger file, because you will most likely need to adjust the relevant transactions afterwards.
+If you prefer not to be asked for each unrecognised transaction, you can set the option `c2l-fallback-account` to an account that will be used instead, e.g., `Expenses:Miscellaneous` or `Expenses:Fallback`. Note that this does not have to be an actual Ledger account. Rather, it should be something that you can easily search for in the ledger file, because you will most likely need to adjust the relevant transactions afterwards.
 
-The account matchers file is a simple TSV (tab-separated values) file that matches strings to accounts:
+The account matchers file is a simple TSV (tab-separated values) file that matches strings to accounts. Just create a new file with `.tsv` as extension (it will be recognised automatically by `csv-mode`) and fill it like this:
 
 ```
 aldi          Expenses:Groceries
