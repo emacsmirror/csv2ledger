@@ -33,32 +33,50 @@ If you have this information in your CSV file, you can use it and add it to the 
 
 ## Installation ##
 
-`csv2ledger` is available from NonGNU ELPA, so you can install it with the package manager. This will also install the dependency `csv-mode` if it's not installed yet.
+`csv2ledger` is available from NonGNU ELPA, so you can install it with the package manager. This will also install the dependency `csv-mode` if it's not installed yet. Once installed, a basic configuration will look like this:
 
+```
+(require 'csv2ledger)
+(setopt c2l-accounts-file nil                                    ; File pointing to the ledger account definitions, used for completion.
+        c2l-base-account "Assets:Checking"                       ; Account of the CSV file.
+        c2l-fallback-account nil                                 ; Target account if one cannot be determined automatically.
+        c2l-account-holder nil                                   ; Name of the account holder that may appear as payee or sender.
+        c2l-csv-columns ()                                       ; List describing the columns in the CSV file.
+        c2l-field-modify-functions nil                           ; Functions used to modify field values.
+        c2l-transaction-modify-functions                         ; Functions used to modify the transaction data.
+        '(c2l-create-title c2l-create-amount c2l-create-account)
+        c2l-entry-function c2l-compose-entry                     ; Function used to create the actual ledger transaction.
+        c2l-account-matchers-file nil                            ; File with substrings matching specific target accounts.
+        c2l-target-match-fields (payee description)              ; Fields in the transaction used to match against account targets in c2l-account-matchers-file.
+        c2l-auto-cleared nil                                     ; Whether to auto-clear transactions.
+        c2l-alignment-column 52)                                 ; Column to which the amount is aligned.
+```
 
-## Customisation ##
+Or with `use-package`:
 
-Several customisation options are present. The full list with a short explanation is presented here, but most of these options are discussed in more detail below.
+```
+(use-package csv2ledger
+  :custom
+  (c2l-accounts-file nil)                                    ; File pointing to the ledger account definitions, used for completion.
+  (c2l-base-account "Assets:Checking")                       ; Account of the CSV file.
+  (c2l-fallback-account nil)                                 ; Target account if one cannot be determined automatically.
+  (c2l-account-holder nil)                                   ; Name of the account holder that may appear as payee or sender.
+  (c2l-csv-columns ())                                       ; List describing the columns in the CSV file.
+  (c2l-field-modify-functions nil)                           ; Functions used to modify field values.
+  (c2l-transaction-modify-functions                          ; Functions used to modify the transaction data.
+   '(c2l-create-title c2l-create-amount c2l-create-account))
+  (c2l-entry-function c2l-compose-entry)                     ; Function used to create the actual ledger transaction.
+  (c2l-account-matchers-file nil)                            ; File with substrings matching specific target accounts.
+  (c2l-target-match-fields (payee description))              ; Fields in the transaction used to match against account targets in c2l-account-matchers-file.
+  (c2l-auto-cleared nil)                                     ; Whether to auto-clear transactions.
+  (c2l-alignment-column 52))                                 ; Column to which the amount is aligned.
+```
 
-- `c2l-accounts-file` (`nil`) — File pointing to the ledger account definitions, used for completion.
-- `c2l-base-account` (`"Assets:Checking"`) — Account of the CSV file.
-- `c2l-fallback-account` (`nil`) — Target account if one cannot be determined automatically.
-- `c2l-account-holder` (`nil`) — Name of the account holder that may appear as payee or sender.
-- `c2l-csv-columns` (`()`) — List describing the columns in the CSV file.
-- `c2l-field-modify-functions` (`nil`) — Functions used to modify field values.
-- `c2l-transaction-modify-functions` (`'(c2l-create-title c2l-create-amount c2l-create-account)`) — Functions used to modify the transaction data.
-- `c2l-entry-function` (`c2l-compose-entry`) — Function used to create the actual ledger transaction.
-- `c2l-account-matchers-file` (`nil`) — File with substrings matching specific target accounts.
-- `c2l-target-match-fields` (`(payee description)`) — Fields in the transaction used to match against account targets in `c2l-account-matchers-file`.
-- `c2l-auto-cleared` (`nil`) — Whether to auto-clear transactions.
-- `c2l-alignment-column` (`52`) — Column to which the amount is aligned.
-
+These examples list all user options with their default values. In your setup, you only need to include the options whose values you actually change. Furthermore, if you prefer to use Emacs' Customize interface for setting user options, a mere `(require 'csv2ledger)` or `(use-package csv2ledger)` will suffice.
 
 ## Setup ##
 
-At the very least, you will need to set two user options: `c2l-base-account` and `c2l-csv-columns`. `c2l-base-account` is the account that represents the bank account in your ledger file.  By default, it is set to the value `"Assets:Checking"`.
-
-`c2l-csv-columns` is a list of column labels representing the columns in your CSV file. Note that these column labels should **not** be set to the column headers in your CSV file. Rather, they should be symbols indicating to `csv2ledger` what type of data each column contains. The following symbols are meaningful to `csv2ledger`:
+At the very least, you will need to set the user option `c2l-csv-columns`. Without setting this option, `csv2ledger` will not work. `c2l-csv-columns` is a list of column labels representing the columns in your CSV file. These column labels are symbols indicating to `csv2ledger` what type of data each column contains. (That is, you should **not** use the column headers in the CSV file itself.) The following symbols are meaningful to `csv2ledger`:
 
 - `date`: booking date of the transaction
 - `posted`: effective date of the transaction
@@ -87,6 +105,8 @@ As an example example, this is my setting for `c2l-csv-columns` (keep in mind th
 The CSV files from my bank have an effective (posted) date in the second column, but it is almost always identical to the booking date and does not provide me with any useful information. Furthermore, they also have an additional final column with the account balance, which `csv2ledger` doesn't use. So I use an underscore for both these columns.
 
 Note that I have a `type` field in this list, which is not one of the fields listed above. You can, in fact, add custom fields to `c2l-csv-columns`. By default, `csv2ledger` does not do anything with such user-defined fields, but with some additional configuration, you can make use of them in several ways. In my CSV files, the column that I label `type` indicates whether the transaction is a bank transfer, an ATM withdrawal, a card payment at a store, etc. I use this information to capture ATM withdrawals. Details are discussed below.
+
+Apart from `c2l-csv-columns`, you may also want to set `c2l-base-account`. This option sets the account in your Ledger file that represents the bank account of the CSV file, so depending on your preferences and the account you're working with, you may want to choose to something other than its default value `"Assets:Checking"`.
 
 
 ## Running the conversion ##
