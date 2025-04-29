@@ -257,7 +257,7 @@ Another important point to note is that the amount in the `amount` field must be
 
 ### Setting the target account (v. 2) ###
 
-The third function in `c2l-transaction-modify-functions` is `c2l-create-account`. This is the function that checks the fields of the transaction against the account matchers, and if one is not found, uses `c2l-fallback-account` or asks the user. If you wish to use a different method to set the account, you can replace this function with a custom one. It needs to add an `account` field to the transaction, but there are no restrictions on how the account is determined.
+The third function in `c2l-transaction-modify-functions` is `c2l-create-account`. This is the function that checks the fields of the transaction against the account matchers, and if no match is found, uses `c2l-fallback-account` or asks the user. If you wish to use a different method to set the account, you can replace this function with a custom one. It needs to add an `account` field to the transaction, but there are no restrictions on how the account is determined.
 
 `csv2ledger` provides an alternative function for creating an account: `c2l-create-account-ask-matcher`. It also checks the transaction against the account matchers, but if no match is found, `c2l-fallback-account` is not used. Instead, you are asked for an account and also whether you want to add a matcher for it. If you say yes, you are asked to provide a string to match against. The new matcher is added to your account matchers file and is also immediately available for further transactions in the CSV file you are processing.
 
@@ -268,7 +268,7 @@ If you want to use this function, remove `c2l-create-account` from `c2l-transact
 
 After all modification functions have been called, the resulting transaction is passed to the function pointed to by the user option `c2l-entry-function`. The default value of this option is the function `c2l-compose-entry`, which creates entries in the form shown above. If that format does not suit your needs, you can use a custom function instead. It should take the transaction as an alist and return a string that can be inserted into a ledger buffer.
 
-The function `c2l-compose-entry` requires that at least the `date`, `title`, `amount` and `account` fields be present in the transaction. In addition, the fields `description` and `posted` are used if they are present. If you write your own custom function, that requirement no longer holds, of course. (In fact, there is not even a requirement that what the `c2l-entry-function` writes out is an actual ledger entry. You could have it convert CSV entries into JSON or YAML or whatever you like.)
+The function `c2l-compose-entry` requires that at least the `date`, `title`, `amount` and `account` fields be present in the transaction. In addition, the fields `description` and `posted` are used if they are present. If you write your own custom function, that requirement no longer holds, of course. (In fact, there is not even a requirement that what the `c2l-entry-function` writes out is an actual ledger entry. You could have it convert CSV entries into JSON or YAML or whatever you like. You could even use it to convert a CSV file into a CSV file with a different format.)
 
 
 ## Different banks, different CSV files ##
