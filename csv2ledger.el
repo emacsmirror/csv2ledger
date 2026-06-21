@@ -404,7 +404,7 @@ entry is marked as cleared."
               (if (and .description (not (string-empty-p .description))) (format "    ; Desc: %s\n" .description) "")
               (format "    %s\n" .account)
               (format "    %s  " c2l-base-account)
-              (make-string (- c2l-alignment-column 4 (length c2l-base-account) 2 (length .amount)) ?\s)
+              (make-string (max 0 (- c2l-alignment-column 4 (length c2l-base-account) 2 (length .amount))) ?\s)
               .amount "\n"))))
 
 ;;; Helper functions
