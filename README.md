@@ -191,7 +191,7 @@ Since this is a very particular conversion, there is no function for it included
 (defun jk/c2l-convert-amount (amount)
   "Convert AMOUNT from the format \"-3.150,20 €\" to \"-€3150.20\".
 This also handles cases such as \"300\" and \"8,7\"."
-  (string-match "\\(-\\)?\\([[:digit:].]+\\(?:,[[:digit:]]\\{2\\}\\)?\\)" amount)
+  (string-match "\\(-\\)?\\([[:digit:].]+\\(?:,[[:digit:]]+\\)?\\)" amount)
   (let ((sign (or (match-string 1 amount) ""))
         (amount (thread-last (match-string 2 amount)
                              (string-replace "." "")
