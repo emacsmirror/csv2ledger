@@ -282,6 +282,13 @@ This should most likely be set to the same value as
   :safe #'integerp
   :group 'csv2ledger)
 
+(defcustom c2l-keep-results-p nil
+  "If nil the result buffer is cleared before each c2l-convert-* call. Otherwise the buffer is kept including previous transactions"
+  :type '(choice (const :tag "clear buffer when starting a conversion" nil)
+		 (const :tag "keep previous results in buffer" t))
+  :safe #'symbolp
+  :group 'csv2ledger)
+
 (defvar-local c2l--accounts nil "List of ledger accounts, mainly used for completion.")
 (defvar c2l--results-buffer nil "Buffer for conversion results.")
 
@@ -478,9 +485,10 @@ one of these contains something that looks like an amount."
 (defun c2l--get-results-buffer ()
   "Create a results buffer for conversion.
 The buffer is called \"*Csv2Ledger Results*\".  If a buffer with
-this name already exists, it is erased and returned.  Otherwise a
+this name already exists, it is erased (unless c2l-keep-results-p is true) and returned.  Otherwise a
 new buffer is created."
   (if (and c2l--results-buffer
+	   (not c2l-keep-results-p)
            (buffer-live-p c2l--results-buffer))
       (with-current-buffer c2l--results-buffer
         (erase-buffer))

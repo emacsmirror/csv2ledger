@@ -49,6 +49,7 @@ If you have this information in your CSV file, you can use it and add it to the 
         c2l-account-matchers-file nil                            ; File with substrings matching specific target accounts.
         c2l-target-match-fields (payee description)              ; Fields in the transaction used to match against account targets in c2l-account-matchers-file.
         c2l-auto-cleared nil                                     ; Whether to auto-clear transactions.
+        c2l-keep-results-p nil                                   ; Whether to keep any previous results in the buffer. When nil clear buffer.
         c2l-alignment-column 52)                                 ; Column to which the amount is aligned.
 ```
 
@@ -69,6 +70,7 @@ Or with `use-package`:
   (c2l-account-matchers-file nil)                            ; File with substrings matching specific target accounts.
   (c2l-target-match-fields (payee description))              ; Fields in the transaction used to match against account targets in c2l-account-matchers-file.
   (c2l-auto-cleared nil)                                     ; Whether to auto-clear transactions.
+  (c2l-keep-results-p nil)                                   ; Whether to keep any previous results in the buffer. When nil clear buffer.
   (c2l-alignment-column 52))                                 ; Column to which the amount is aligned.
 ```
 
@@ -111,7 +113,7 @@ Apart from `c2l-csv-columns`, you may also want to set `c2l-base-account`. This 
 
 ## Running the conversion ##
 
-With these options set up, it is possible to convert a CSV file. To do so, open the CSV file in Emacs and run `c2l-convert-buffer`. This command creates a new buffer named `*Csv2Ledger Results*` and puts all converted CSV transactions in it. If you do not wish to convert the entire buffer, you can also select a region and call `M-x c2l-convert-region` instead. Note that if a buffer with the name `"Csv2Ledger Results"` already exists, it is reused. That is, its contents is erased before the new entries are put in it.
+With these options set up, it is possible to convert a CSV file. To do so, open the CSV file in Emacs and run `c2l-convert-buffer`. This command creates a new buffer named `*Csv2Ledger Results*` and puts all converted CSV transactions in it. If you do not wish to convert the entire buffer, you can also select a region and call `M-x c2l-convert-region` instead. Note that if a buffer with the name `"Csv2Ledger Results"` already exists, it is reused. That is, its contents is erased before the new entries are put in it unless `c2l-keep-results-p` is `t`.
 
 There is also the command `c2l-csv-entry-as-kill`: this converts the single entry that point is on and places the result in the kill ring. It also displays the entry in the echo area so you can see what it is doing. This is an easy way of testing if your conversion settings are correct.
 
