@@ -6,7 +6,7 @@
 ;; Author: Joost Kremers <joostkremers@fastmail.fm>
 ;; Maintainer: Joost Kremers <joostkremers@fastmail.fm>
 ;; Created: 2022
-;; Version: 1.5.5
+;; Version: 1.6
 ;; Package-Requires: ((emacs "29.1") (csv-mode "1.24"))
 ;; URL: https://codeberg.org/joostkremers/csv2ledger
 
@@ -282,10 +282,10 @@ This should most likely be set to the same value as
   :safe #'integerp
   :group 'csv2ledger)
 
-(defcustom c2l-keep-results-p nil
-  "If nil the result buffer is cleared before each c2l-convert-* call. Otherwise the buffer is kept including previous transactions"
-  :type '(choice (const :tag "clear buffer when starting a conversion" nil)
-		 (const :tag "keep previous results in buffer" t))
+(defcustom c2l-clear-results t
+  "If non-nil, clear the result buffer before converting."
+  :type '(choice (const :tag "Clear results buffer when starting a conversion" t)
+		 (const :tag "Keep previous conversion in buffer" nil))
   :safe #'symbolp
   :group 'csv2ledger)
 
@@ -482,14 +482,15 @@ one of these contains something that looks like an amount."
                        (c2l--amount-p (alist-get field transaction "")))
                      '(amount credit debit))))))
 
-(defun c2l--get-results-buffer ()
+(defun c2l--get-results-buffer (arg)
   "Create a results buffer for conversion.
-The buffer is called \"*Csv2Ledger Results*\".  If a buffer with
-this name already exists, it is erased (unless c2l-keep-results-p is true) and returned.  Otherwise a
-new buffer is created."
+The buffer is called \"*Csv2Ledger Results*\".  If a buffer with this
+name already exists, it is returned, unless ARG is non-nil or the user
+option `c2l-clear-results' is nil."
   (if (and c2l--results-buffer
-	   (not c2l-keep-results-p)
-           (buffer-live-p c2l--results-buffer))
+           (buffer-live-p c2l--results-buffer)
+	   c2l-clear-results
+           (not arg))
       (with-current-buffer c2l--results-buffer
         (erase-buffer))
     (setq c2l--results-buffer (get-buffer-create "*Csv2Ledger Results*"))
@@ -526,7 +527,7 @@ in `c2l-csv-columns'."
     (message "%s" entry)))
 
 ;;;###autoload
-(defun c2l-convert-region (start end)
+(defun c2l-convert-region (start end arg)
   "Convert the CSV entries in the region to ledger entries.
 START and END describe the region.  Note that it is assumed that
 START does indeed refer to the start of the region and END to its
@@ -534,11 +535,14 @@ end.  In other words, START must be smaller than END.  START and
 END do not have to point to the start of end of a line, but the
 conversion always takes the whole line into account.
 
+If ARG is non-nil, do not erase the result buffer, instead append the
+new entries to the existing buffer contents.
+
 This function always returns nil.  The converted entries are
 placed in the buffer \"*Csv2Ledger Results*\", which is erased
 beforehand if it already exists."
-  (interactive "r")
-  (let ((buffer (c2l--get-results-buffer))
+  (interactive "r\nP")
+  (let ((buffer (c2l--get-results-buffer arg))
         (n 0))
     (save-mark-and-excursion
       (goto-char start)
@@ -553,19 +557,20 @@ beforehand if it already exists."
     (message "[Csv2Ledger] Converted %d entries." n)))
 
 ;;;###autoload
-(defun c2l-convert-buffer ()
+(defun c2l-convert-buffer (arg)
   "Convert the CSV entries in the current buffer to ledger entries.
-The converted entries are placed in the buffer \"*Csv2Ledger
-Results*\", which is erased beforehand if it already exists.  If
-the first line of the buffer looks like a header line (see
-`c2l--has-header'), it is skipped."
-  (interactive)
+The converted entries are placed in the buffer \"*Csv2Ledger Results*\",
+which is erased beforehand if it already exists, unless ARG is non-nil
+or the user option `c2l-clear-resorts' is unset.  If the first line of
+the buffer looks like a header line (see `c2l--has-header'), it is
+skipped."
+  (interactive "P")
   (let ((beg (save-mark-and-excursion
                (goto-char (point-min))
                (if (c2l--has-header)
                    (forward-line 1))
                (point))))
-    (c2l-convert-region beg (point-max))))
+    (c2l-convert-region arg beg (point-max))))
 
 (provide 'csv2ledger)
 
